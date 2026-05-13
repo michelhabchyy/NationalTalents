@@ -1,0 +1,105 @@
+# Decap CMS configuration for National Talents
+#
+# Backend: GitHub repo, branch "main". Direct commits via GitHub OAuth.
+# See ADMIN.md in the repo root for one-time setup steps.
+
+backend:
+  name: github
+  repo: michelhabchyy/NationalTalents
+  branch: main
+  # base_url is set in ADMIN.md once you deploy the OAuth proxy
+  # (or move the site to Netlify which provides its own auth).
+
+# Where Decap uploads images.
+media_folder: "images"
+public_folder: "/images"
+
+# Show "Editorial Workflow" so drafts go through a PR before publishing.
+# Comment out to commit directly to main.
+publish_mode: editorial_workflow
+
+# Site URL used in "View Live" buttons inside the admin.
+site_url: https://michelhabchyy.github.io/NationalTalents/
+display_url: https://michelhabchyy.github.io/NationalTalents/
+
+# ---------------------------------------------------------------------------
+# Collections
+# Each "file" or "folder" maps to a YAML/Markdown source the site reads at
+# runtime via content/cms-loader.js
+# ---------------------------------------------------------------------------
+collections:
+
+  # ----- Tālia Programs (one YAML file, edited as a list) -----
+  - name: programs
+    label: "Tālia Programs"
+    label_singular: "Program"
+    files:
+      - file: "content/programs.yml"
+        label: "Programs"
+        name: "programs"
+        fields:
+          - label: "Programs"
+            name: "programs"
+            widget: "list"
+            summary: "{{fields.name}} — {{fields.duration}}"
+            fields:
+              - { label: "Slug (used in URLs / linked program)", name: "id", widget: "string", hint: "lowercase, no spaces — e.g. rome, paris" }
+              - { label: "Featured?", name: "featured", widget: "boolean", default: false, required: false }
+              - { label: "Display order", name: "order", widget: "number", default: 100, value_type: "int" }
+              - { label: "Name", name: "name", widget: "string" }
+              - { label: "Short description", name: "short", widget: "text" }
+              - { label: "Duration label (e.g. '6 days')", name: "duration", widget: "string" }
+              - { label: "Country", name: "country", widget: "string" }
+              - { label: "Price label (e.g. 'From SAR 18,000')", name: "price", widget: "string" }
+              - { label: "Hero image (optional)", name: "image", widget: "image", required: false }
+              - { label: "Detail page slug (e.g. 'talia-rome')", name: "detail_page", widget: "string", required: false, hint: "Leave empty if no detail page exists yet" }
+
+  # ----- Careers / Jobs -----
+  - name: jobs
+    label: "Open Roles (Careers)"
+    label_singular: "Role"
+    files:
+      - file: "content/jobs.yml"
+        label: "Jobs"
+        name: "jobs"
+        fields:
+          - label: "Open roles"
+            name: "jobs"
+            widget: "list"
+            summary: "{{fields.title}} — {{fields.location}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Department", name: "department", widget: "string" }
+              - { label: "Location", name: "location", widget: "string" }
+              - { label: "Type (Full-time / Contract)", name: "type", widget: "string", default: "Full-time" }
+              - { label: "Experience", name: "experience", widget: "string", default: "3+ years" }
+              - { label: "Display order", name: "order", widget: "number", default: 100, value_type: "int" }
+
+  # ----- Site-wide editable text -----
+  - name: settings
+    label: "Site Text"
+    files:
+      - file: "content/settings.yml"
+        label: "Homepage"
+        name: "homepage"
+        fields:
+          - { label: "Hero heading line 1", name: "hero_line_1", widget: "string" }
+          - { label: "Hero heading line 2 (italic accent)", name: "hero_line_2", widget: "string" }
+          - { label: "Hero subtitle", name: "hero_sub", widget: "text" }
+          - { label: "Hero badge text", name: "hero_tag", widget: "string" }
+
+      - file: "content/settings.yml"
+        label: "Tālia"
+        name: "talia"
+        fields:
+          - { label: "Tālia hero tagline", name: "talia_tagline", widget: "text" }
+          - { label: "Apply-now button label", name: "talia_apply_label", widget: "string", default: "Apply now" }
+
+      - file: "content/settings.yml"
+        label: "Contact"
+        name: "contact"
+        fields:
+          - { label: "Business email", name: "email_business", widget: "string" }
+          - { label: "General email", name: "email_general", widget: "string" }
+          - { label: "Careers email", name: "email_careers", widget: "string" }
+          - { label: "Press email", name: "email_press", widget: "string" }

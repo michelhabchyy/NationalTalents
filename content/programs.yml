@@ -1,0 +1,60 @@
+programs:
+  - id: rome
+    featured: true
+    order: 1
+    name: Rome History Immersion
+    short: From ancient ruins to cutting-edge contemporary spaces, a 6-day deep exploration of Rome's art scenes.
+    duration: 6 days
+    country: Italy
+    price: From SAR 18,000
+    detail_page: talia-rome
+
+  - id: paris
+    featured: false
+    order: 2
+    name: Paris Curatorial Studio
+    short: Behind-the-scenes access to Paris's leading museums and contemporary art institutions.
+    duration: 7 days
+    country: France
+    price: From SAR 22,000
+    detail_page: ""
+
+  - id: istanbul
+    featured: false
+    order: 3
+    name: Istanbul Crossroads
+    short: Where East meets West — a journey through Istanbul's living cultural heritage.
+    duration: 5 days
+    country: Türkiye
+    price: From SAR 14,000
+    detail_page: ""
+
+  - id: tokyo
+    featured: false
+    order: 4
+    name: Tokyo Contemporary
+    short: A guided immersion in Japan's contemporary art, design, and emerging cultural movements.
+    duration: 8 days
+    country: Japan
+    price: From SAR 32,000
+    detail_page: ""
+
+  - id: berlin
+    featured: false
+    order: 5
+    name: Berlin Independent
+    short: The artist-led, institution-skeptical, gloriously experimental art scene of Berlin.
+    duration: 6 days
+    country: Germany
+    price: From SAR 19,000
+    detail_page: ""
+
+  - id: barcelona
+    featured: false
+    order: 6
+    name: Barcelona Architecture
+    short: From Gaudí to today — how architecture shapes Barcelona's cultural identity.
+    duration: 5 days
+    country: Spain
+    price: From SAR 16,500
+    detail_page: ""

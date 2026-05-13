@@ -2739,16 +2739,16 @@
     <div class="hero-inner">
       <div class="hero-tag" style="opacity:0; animation: wordIn .8s .2s forwards;">
         <span class="dot"></span>
-        <span class="mono">National Talents Company · Est. 2007</span>
+        <span class="mono" data-cms="hero_tag">National Talents Company · Est. 2007</span>
       </div>
-      <h1 class="display">
+      <h1 class="display" data-cms-hero>
         <span class="word" style="animation-delay:.3s">Unlocking</span>
         <span class="word" style="animation-delay:.45s">human</span><br>
         <span class="word accent" style="animation-delay:.6s">potential</span>
         <span class="word" style="animation-delay:.75s">through</span><br>
         <span class="word" style="animation-delay:.9s">experiences.</span>
       </h1>
-      <p class="hero-sub" style="opacity:0; animation: wordIn .8s 1.1s forwards;">
+      <p class="hero-sub" style="opacity:0; animation: wordIn .8s 1.1s forwards;" data-cms="hero_sub">
         We design, build, and operate museums, science centers, makerspaces, festivals, and programs across the MENA region — creating human-centric experiences that connect, engage, and inspire.
       </p>
       <div class="hero-actions" style="opacity:0; animation: wordIn .8s 1.3s forwards;">
@@ -3394,7 +3394,9 @@
   </section>
 
   <section class="careers-list">
-    <div class="container">
+    <div class="container" data-cms-list="jobs">
+      <!-- Rows below are static fallback. The cms-loader replaces them
+           with rows built from content/jobs.yml at runtime. -->
       <div class="job reveal">
         <div><div class="job-title display">Senior Exhibit Designer</div><div class="job-meta">Design</div></div>
         <div class="job-meta">Riyadh</div>
@@ -3507,19 +3509,19 @@
         <div class="reveal">
           <div class="contact-info-block">
             <h4>Business Inquiries</h4>
-            <p><a href="mailto:bd@talents.edu.sa">bd@talents.edu.sa</a></p>
+            <p><a data-cms-email="email_business" href="mailto:bd@talents.edu.sa">bd@talents.edu.sa</a></p>
           </div>
           <div class="contact-info-block">
             <h4>General Inquiries</h4>
-            <p><a href="mailto:info@talents.edu.sa">info@talents.edu.sa</a></p>
+            <p><a data-cms-email="email_general" href="mailto:info@talents.edu.sa">info@talents.edu.sa</a></p>
           </div>
           <div class="contact-info-block">
             <h4>Careers</h4>
-            <p><a href="mailto:careers@talents.edu.sa">careers@talents.edu.sa</a></p>
+            <p><a data-cms-email="email_careers" href="mailto:careers@talents.edu.sa">careers@talents.edu.sa</a></p>
           </div>
           <div class="contact-info-block">
             <h4>Press</h4>
-            <p><a href="mailto:press@talents.edu.sa">press@talents.edu.sa</a></p>
+            <p><a data-cms-email="email_press" href="mailto:press@talents.edu.sa">press@talents.edu.sa</a></p>
           </div>
         </div>
         <form class="contact-form reveal reveal-delay-1" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Message sent ✓'; this.querySelector('button').style.background='#4ade80'; this.querySelector('button').style.color='#0a1430'; setTimeout(()=>{this.reset(); this.querySelector('button').textContent='Send Message'; this.querySelector('button').style.background=''; this.querySelector('button').style.color='';}, 3000);">
@@ -3588,10 +3590,10 @@
         </div>
         <div>
           <div class="talia-tagline-card">
-            <p>Travel differently. Go beyond the surface and discover the institutions, ideas, and people that shape cities around the world.</p>
+            <p data-cms="talia_tagline">Travel differently. Go beyond the surface and discover the institutions, ideas, and people that shape cities around the world.</p>
           </div>
           <button class="talia-apply-btn" onclick="goToPage('talia-programs')">
-            Apply now
+            <span data-cms="talia_apply_label">Apply now</span>
             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M5 12h14m-7-7l7 7-7 7"/></svg>
           </button>
         </div>
@@ -3703,7 +3705,10 @@
         <div class="talia-frame-meta top-right"><span class="accent">06</span> destinations</div>
         <div class="talia-frame-meta bottom-left">rome · paris · istanbul · tokyo · berlin · barcelona</div>
         <div class="talia-frame-meta bottom-right">ref · t03</div>
-      <div class="program-cards-grid">
+      <div class="program-cards-grid" data-cms-list="programs">
+        <!-- Cards below are the static fallback (also act as a template for class names).
+             At runtime the cms-loader replaces these with cards built from
+             content/programs.yml. If JS is disabled the static cards still show. -->
         <div class="program-listing-card reveal" onclick="goToPage('talia-rome')">
           <div class="program-listing-image rome">
             <span class="program-listing-tag">FEATURED</span>
@@ -4287,6 +4292,153 @@
   </div>
 </footer>
 
+<!-- ============ CMS CONTENT LOADER ============
+     Fetches content/*.yml and injects programs, jobs, and editable text into
+     the page. If any fetch fails (file missing, dev offline, etc.) the
+     existing hard-coded fallback HTML is left untouched, so nothing breaks. -->
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js" defer></script>
+<script defer>
+(function () {
+  const onReady = (fn) =>
+    document.readyState === 'loading'
+      ? document.addEventListener('DOMContentLoaded', fn)
+      : fn();
+
+  // Determine the base URL — works at root or under a GitHub Pages project subpath.
+  // Strips index.html and any deep page paths.
+  const base = (() => {
+    const p = location.pathname.replace(/\/[^/]*$/, '/');
+    return p.endsWith('/') ? p : p + '/';
+  })();
+
+  async function fetchYaml(path) {
+    try {
+      const res = await fetch(base + path, { cache: 'no-cache' });
+      if (!res.ok) return null;
+      const text = await res.text();
+      return jsyaml.load(text);
+    } catch (err) {
+      console.warn('[cms] failed to load', path, err);
+      return null;
+    }
+  }
+
+  function escape(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[c]);
+  }
+
+  // ----- Render programs from content/programs.yml -----
+  function renderPrograms(data) {
+    if (!data || !Array.isArray(data.programs)) return;
+    const grid = document.querySelector('[data-cms-list="programs"]');
+    if (!grid) return;
+    const sorted = [...data.programs].sort((a, b) => (a.order || 999) - (b.order || 999));
+    grid.innerHTML = sorted.map((p, i) => {
+      const slug   = escape(p.id || 'program');
+      const detail = (p.detail_page || '').trim();
+      const onclick = detail ? ` onclick="goToPage('${escape(detail)}')"` : '';
+      const featured = p.featured
+        ? '<span class="program-listing-tag">FEATURED</span>'
+        : '';
+      const delayCls = i === 0 ? '' : ` reveal-delay-${(i % 3) + 1}`;
+      return `
+        <div class="program-listing-card reveal${delayCls}"${onclick}>
+          <div class="program-listing-image ${slug}">
+            ${featured}
+          </div>
+          <div class="program-listing-body">
+            <h3>${escape(p.name)}</h3>
+            <p>${escape(p.short)}</p>
+            <div class="program-listing-meta">
+              <span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${escape(p.duration)}</span>
+              <span><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg> ${escape(p.country)}</span>
+              <span>${escape(p.price)}</span>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ----- Render jobs from content/jobs.yml -----
+  function renderJobs(data) {
+    if (!data || !Array.isArray(data.jobs)) return;
+    const list = document.querySelector('[data-cms-list="jobs"]');
+    if (!list) return;
+    const sorted = [...data.jobs].sort((a, b) => (a.order || 999) - (b.order || 999));
+    list.innerHTML = sorted.map(j => `
+      <div class="job reveal">
+        <div>
+          <div class="job-title display">${escape(j.title)}</div>
+          <div class="job-meta">${escape(j.department || '')}</div>
+        </div>
+        <div class="job-meta">${escape(j.location || '')}</div>
+        <div class="job-meta">${escape(j.type || '')}</div>
+        <div class="job-meta">${escape(j.experience || '')}</div>
+        <div class="job-arrow"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M7 17L17 7m0 0H7m10 0v10"/></svg></div>
+      </div>`).join('');
+  }
+
+  // ----- Apply settings.yml to data-cms / data-cms-email / data-cms-hero elements -----
+  function applySettings(s) {
+    if (!s) return;
+    document.querySelectorAll('[data-cms]').forEach(el => {
+      const key = el.getAttribute('data-cms');
+      if (s[key] != null) el.textContent = s[key];
+    });
+    document.querySelectorAll('[data-cms-email]').forEach(el => {
+      const key = el.getAttribute('data-cms-email');
+      if (s[key] != null) {
+        el.textContent = s[key];
+        el.setAttribute('href', 'mailto:' + s[key]);
+      }
+    });
+    // Hero h1 is special — words are split for animation. Rebuild from the two
+    // configurable lines and re-attach the same word/accent classes.
+    const hero = document.querySelector('[data-cms-hero]');
+    if (hero && (s.hero_line_1 || s.hero_line_2)) {
+      const buildWords = (text, accentIdx, baseDelay) => {
+        const words = String(text || '').trim().split(/\s+/);
+        return words.map((w, i) => {
+          const cls = i === accentIdx ? 'word accent' : 'word';
+          const delay = (baseDelay + i * 0.15).toFixed(2);
+          return `<span class="${cls}" style="animation-delay:${delay}s">${escape(w)}</span>`;
+        }).join(' ');
+      };
+      // Heuristic: in line 2, the first word becomes the gold accent.
+      const l1 = buildWords(s.hero_line_1, -1, 0.3);
+      const l2 = buildWords(s.hero_line_2, 0, 0.6);
+      hero.innerHTML = l1 + '<br>' + l2;
+    }
+  }
+
+  onReady(async () => {
+    // Wait for js-yaml to be ready
+    if (typeof jsyaml === 'undefined') {
+      await new Promise(r => {
+        const check = () => (typeof jsyaml !== 'undefined') ? r() : setTimeout(check, 50);
+        check();
+      });
+    }
+    const [programs, jobs, settings] = await Promise.all([
+      fetchYaml('content/programs.yml'),
+      fetchYaml('content/jobs.yml'),
+      fetchYaml('content/settings.yml'),
+    ]);
+    renderPrograms(programs);
+    renderJobs(jobs);
+    applySettings(settings);
+    // Re-observe newly-injected .reveal elements
+    setTimeout(() => {
+      document.querySelectorAll('.reveal, .reveal-scale').forEach(el => {
+        if (window.__revealObserver) window.__revealObserver.observe(el);
+      });
+    }, 50);
+  });
+})();
+</script>
+
 <script>
   // ============ ROUTER ============
   const pages = document.querySelectorAll('.page');
@@ -4362,6 +4514,8 @@
     });
   }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
   document.querySelectorAll('.reveal, .reveal-scale, .story-quote').forEach(el => observer.observe(el));
+  // Exposed so the CMS loader can re-observe content it injects after load.
+  window.__revealObserver = observer;
 
   // ============ STAT COUNTER ============
   const animateCount = (el) => {

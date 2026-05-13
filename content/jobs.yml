@@ -1,0 +1,42 @@
+jobs:
+  - title: Senior Exhibit Designer
+    department: Design
+    location: Riyadh
+    type: Full-time
+    experience: 5+ years
+    order: 1
+
+  - title: Project Manager — Museums
+    department: Operations
+    location: Riyadh
+    type: Full-time
+    experience: 7+ years
+    order: 2
+
+  - title: Content Producer
+    department: Content & Education
+    location: Dubai
+    type: Full-time
+    experience: 3+ years
+    order: 3
+
+  - title: Fabrication Lead
+    department: Production
+    location: Riyadh
+    type: Full-time
+    experience: 5+ years
+    order: 4
+
+  - title: Education Program Designer
+    department: Programs
+    location: Riyadh
+    type: Full-time
+    experience: 3+ years
+    order: 5
+
+  - title: AV Systems Engineer
+    department: Technical
+    location: Dubai
+    type: Full-time
+    experience: 4+ years
+    order: 6

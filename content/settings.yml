@@ -1,0 +1,18 @@
+# Site-wide editable text.
+# Anything in this file can be edited through /admin/.
+
+# ----- Homepage hero -----
+hero_tag: "National Talents Company · Est. 2007"
+hero_line_1: "Unlocking human"
+hero_line_2: "potential through experiences."
+hero_sub: "We design, build, and operate museums, science centers, makerspaces, festivals, and programs across the MENA region — creating human-centric experiences that connect, engage, and inspire."
+
+# ----- Tālia main page -----
+talia_tagline: "Travel differently. Go beyond the surface and discover the institutions, ideas, and people that shape cities around the world."
+talia_apply_label: "Apply now"
+
+# ----- Contact emails -----
+email_business: "bd@talents.edu.sa"
+email_general: "info@talents.edu.sa"
+email_careers: "careers@talents.edu.sa"
+email_press: "press@talents.edu.sa"
