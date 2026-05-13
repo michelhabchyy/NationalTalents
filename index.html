@@ -1548,77 +1548,170 @@
     line-height: 1.6;
   }
 
-  /* Itinerary accordion + scroll-driven timeline */
+  /* ============ ITINERARY: SCROLL-DRAWN FUTURISTIC TIMELINE ============ */
   .itinerary-list {
-    display: flex; flex-direction: column; gap: 12px;
+    display: flex; flex-direction: column; gap: 14px;
     margin-top: 16px;
     position: relative;
-    padding-left: 28px;
+    padding-left: 44px;
+    --itin-progress: 0px;   /* set by JS: pixels of drawn line */
+    --itin-track-h: 0px;    /* set by JS: total track height in px */
   }
+  /* Faint circuit-style track */
   .itinerary-list::before {
     content: '';
     position: absolute;
-    left: 7px; top: 8px; bottom: 8px;
+    left: 13px; top: 18px;
     width: 2px;
-    background: var(--talia-line);
+    height: var(--itin-track-h, 100%);
+    background:
+      repeating-linear-gradient(
+        180deg,
+        rgba(231,106,60,0.18) 0 6px,
+        transparent 6px 10px
+      );
     border-radius: 2px;
+    pointer-events: none;
   }
+  /* The drawn neon line, grows with scroll */
   .itinerary-list::after {
     content: '';
     position: absolute;
-    left: 7px; top: 8px;
+    left: 13px; top: 18px;
     width: 2px;
-    height: var(--itinerary-progress, 0%);
-    background: linear-gradient(180deg, var(--talia-coral), var(--talia-olive));
+    height: var(--itin-progress, 0px);
+    background: linear-gradient(180deg,
+      rgba(231,106,60,0.4) 0%,
+      var(--talia-coral) 25%,
+      var(--talia-coral) 80%,
+      #ffb892 100%);
     border-radius: 2px;
-    transition: height .25s ease-out;
+    box-shadow:
+      0 0 6px rgba(231,106,60,0.7),
+      0 0 14px rgba(231,106,60,0.4),
+      0 0 28px rgba(231,106,60,0.2);
+    pointer-events: none;
+    z-index: 1;
+    transition: height .08s linear;
   }
+  /* Comet head following the leading edge of the line */
+  .itin-head {
+    position: absolute;
+    left: 7px;
+    top: calc(18px + var(--itin-progress, 0px) - 7px);
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0%, var(--talia-coral) 55%, rgba(231,106,60,0) 80%);
+    box-shadow:
+      0 0 10px #fff,
+      0 0 18px var(--talia-coral),
+      0 0 34px rgba(231,106,60,0.6);
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity .3s ease, top .08s linear;
+    animation: itinHeadPulse 1.6s ease-in-out infinite;
+  }
+  .itinerary-list[data-progress-active="true"] .itin-head { opacity: 1; }
+  @keyframes itinHeadPulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50%      { transform: scale(1.35); filter: brightness(1.4); }
+  }
+
+  /* Items — hidden until the line "reaches" them */
   .itinerary-item {
     background: white;
     border: 1px solid var(--talia-line);
     border-radius: 8px;
     overflow: hidden;
-    transition: transform .5s cubic-bezier(0.2, 0.8, 0.2, 1),
-                opacity .5s ease,
-                border-color .35s ease,
-                box-shadow .35s ease,
-                background .35s ease;
     position: relative;
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(24px) scale(0.985);
+    filter: blur(4px);
+    transition:
+      transform .55s cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity .55s ease,
+      filter .55s ease,
+      border-color .35s ease,
+      box-shadow .35s ease,
+      background .35s ease;
   }
+  /* Node dot */
   .itinerary-item::before {
     content: '';
     position: absolute;
-    left: -28px; top: 18px;
-    width: 16px; height: 16px;
+    left: -38px; top: 14px;
+    width: 18px; height: 18px;
     border-radius: 50%;
-    background: white;
-    border: 2px solid var(--talia-line);
+    background: var(--talia-cream);
+    border: 2px solid rgba(231,106,60,0.25);
     transition: background .35s ease, border-color .35s ease, transform .35s ease, box-shadow .35s ease;
+    z-index: 2;
+  }
+  /* Ring-ripple emitted on activation */
+  .itinerary-item::after {
+    content: '';
+    position: absolute;
+    left: -44px; top: 8px;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    border: 2px solid var(--talia-coral);
+    opacity: 0;
+    pointer-events: none;
     z-index: 1;
   }
-  .itinerary-item.in-view {
+
+  /* Reached: line has drawn past this item's dot — item materializes */
+  .itinerary-item.reached {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
+    filter: blur(0);
   }
-  .itinerary-item.active {
-    border-color: var(--talia-coral);
-    box-shadow: 0 12px 30px rgba(231,106,60,0.18);
-    background: #fffbf6;
-  }
-  .itinerary-item.active::before {
+  .itinerary-item.reached::before {
     background: var(--talia-coral);
     border-color: var(--talia-coral);
-    transform: scale(1.15);
-    box-shadow: 0 0 0 6px rgba(231,106,60,0.15);
+    box-shadow:
+      0 0 0 4px rgba(231,106,60,0.15),
+      0 0 14px rgba(231,106,60,0.55);
+    transform: scale(1.05);
   }
-  .itinerary-item.passed::before {
-    background: var(--talia-olive);
-    border-color: var(--talia-olive);
+  .itinerary-item.reached.just-reached::after {
+    animation: itinRipple 1s ease-out forwards;
+  }
+  @keyframes itinRipple {
+    0%   { opacity: 0.9; transform: scale(0.55); }
+    100% { opacity: 0;   transform: scale(2.2); }
+  }
+
+  /* The item currently centered in viewport: emphasised */
+  .itinerary-item.active {
+    border-color: var(--talia-coral);
+    box-shadow:
+      0 12px 30px rgba(231,106,60,0.18),
+      0 0 0 1px rgba(231,106,60,0.35) inset;
+    background: linear-gradient(180deg, #fffbf6, #ffffff);
+  }
+  .itinerary-item.active::before {
+    transform: scale(1.2);
+    box-shadow:
+      0 0 0 6px rgba(231,106,60,0.18),
+      0 0 22px rgba(231,106,60,0.75);
   }
   .itinerary-item.open { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-  .itinerary-item.open.active { box-shadow: 0 12px 30px rgba(231,106,60,0.22); }
+  .itinerary-item.open.active { box-shadow: 0 14px 36px rgba(231,106,60,0.25); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .itin-head { animation: none; }
+    .itinerary-item { opacity: 1; transform: none; filter: none; }
+    .itinerary-item.reached::after { animation: none; }
+  }
+  @media (max-width: 900px) {
+    .itinerary-list { padding-left: 36px; }
+    .itinerary-list::before, .itinerary-list::after { left: 9px; }
+    .itin-head { left: 3px; }
+    .itinerary-item::before { left: -32px; }
+    .itinerary-item::after { left: -38px; }
+  }
   .itinerary-header {
     width: 100%;
     padding: 14px 18px;
@@ -4050,60 +4143,80 @@
     });
   });
 
-  // ============ TĀLIA ITINERARY: SCROLL-DRIVEN INTERACTION ============
-  // 1) Stagger-reveal items as they enter the viewport
-  // 2) Track which item is closest to viewport center → mark it .active
-  //    (auto-opens that item, marks earlier ones .passed)
-  // 3) Grow a vertical progress line alongside the timeline
+  // ============ TĀLIA ITINERARY: SCROLL-DRAWN FUTURISTIC TIMELINE ============
+  // The neon line draws downward as the user scrolls past the section.
+  // Each milestone "materializes" the moment the leading edge crosses its dot,
+  // emitting a ring-ripple. A glowing comet head rides the leading edge.
   document.querySelectorAll('.itinerary-list').forEach(list => {
     const items = Array.from(list.querySelectorAll('.itinerary-item'));
     if (!items.length) return;
 
-    // Stagger reveal
-    const revealObs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const idx = items.indexOf(entry.target);
-          entry.target.style.transitionDelay = (idx * 80) + 'ms';
-          entry.target.classList.add('in-view');
-          revealObs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
-    items.forEach(it => revealObs.observe(it));
+    // Inject the comet head element once
+    if (!list.querySelector('.itin-head')) {
+      const head = document.createElement('span');
+      head.className = 'itin-head';
+      head.setAttribute('aria-hidden', 'true');
+      list.appendChild(head);
+    }
 
-    // Scroll-spy: pick the item closest to the viewport's vertical center
-    let userToggled = new WeakSet();
+    // Track manual user toggles so we don't override their open/close choice
+    const userToggled = new WeakSet();
     items.forEach(it => {
       const header = it.querySelector('.itinerary-header');
       if (header) header.addEventListener('click', () => userToggled.add(it));
     });
 
+    // Per-item dot Y-offset within the list (computed lazily)
+    let dotOffsets = [];
+    const recomputeOffsets = () => {
+      const listTop = list.getBoundingClientRect().top + window.scrollY;
+      dotOffsets = items.map(it => {
+        const r = it.getBoundingClientRect();
+        // dot sits roughly 23px below the item's top (top:14 + half of 18)
+        return (r.top + window.scrollY) - listTop + 23;
+      });
+      // Total track height = from first dot to last dot
+      const trackH = dotOffsets.length ? dotOffsets[dotOffsets.length - 1] - 18 + 14 : 0;
+      list.style.setProperty('--itin-track-h', Math.max(0, trackH) + 'px');
+    };
+
     let ticking = false;
     const update = () => {
       ticking = false;
-      const focusY = window.innerHeight * 0.4;
+      if (!dotOffsets.length) recomputeOffsets();
+
+      const listRect = list.getBoundingClientRect();
+      const focusY = window.innerHeight * 0.45;            // the "drawing line" in screen space
+      const drawnPx = Math.max(0, Math.min(
+        focusY - listRect.top - 18,                         // pixels of line drawn (relative to list top, minus the 18px offset)
+        (dotOffsets[dotOffsets.length - 1] || 0)            // never overshoot the last dot
+      ));
+
+      list.style.setProperty('--itin-progress', drawnPx + 'px');
+      list.dataset.progressActive = drawnPx > 0 ? 'true' : 'false';
+
+      // Find the currently active item (the one whose dot the head is on or just past)
       let activeIdx = -1;
-      let bestDist = Infinity;
+      for (let i = 0; i < dotOffsets.length; i++) {
+        if (drawnPx >= dotOffsets[i] - 4) activeIdx = i;
+      }
+
       items.forEach((it, i) => {
-        const r = it.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > window.innerHeight) return;
-        const center = r.top + r.height / 2;
-        const dist = Math.abs(center - focusY);
-        if (dist < bestDist) { bestDist = dist; activeIdx = i; }
-      });
-      items.forEach((it, i) => {
-        const isActive = i === activeIdx;
-        it.classList.toggle('active', isActive);
-        it.classList.toggle('passed', i < activeIdx);
-        // Auto-open the active item (unless the user manually toggled it)
+        const wasReached = it.classList.contains('reached');
+        const isReached = i <= activeIdx;
+        if (isReached && !wasReached) {
+          // Fire the ring-ripple once on first reach
+          it.classList.add('reached', 'just-reached');
+          setTimeout(() => it.classList.remove('just-reached'), 1100);
+        } else if (!isReached && wasReached) {
+          // User scrolled back up — un-reach so it can re-fire on re-entry
+          it.classList.remove('reached', 'just-reached');
+        }
+        it.classList.toggle('active', i === activeIdx);
         if (!userToggled.has(it)) {
-          it.classList.toggle('open', isActive);
+          it.classList.toggle('open', i === activeIdx);
         }
       });
-      // Grow the progress line based on the active index
-      const progress = activeIdx < 0 ? 0 : ((activeIdx + 1) / items.length) * 100;
-      list.style.setProperty('--itinerary-progress', progress + '%');
     };
 
     const onScroll = () => {
@@ -4113,10 +4226,19 @@
       }
     };
 
+    const onResize = () => {
+      dotOffsets = [];     // force recompute on next scroll tick
+      onScroll();
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll, { passive: true });
-    // Initial run after layout settles
-    setTimeout(update, 100);
+    window.addEventListener('resize', onResize, { passive: true });
+    // Initial paint after layout settles (fonts loaded, accordion sized)
+    setTimeout(() => { recomputeOffsets(); update(); }, 150);
+    // Also recompute after fonts load (sizes can shift)
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { recomputeOffsets(); update(); });
+    }
   });
 </script>
 </body>
