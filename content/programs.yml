@@ -55,12 +55,3 @@ programs:
     country: Spain
     price: From SAR 16,500
     detail_page: ''
-  - id: new-program
-    featured: true
-    order: 7
-    name: New program
-    short: cbhdsgfuisqgfuiorfgioqfuois
-    duration: '7'
-    country: lebanon
-    price: '17000'
-    detail_page: talia-lebanon
