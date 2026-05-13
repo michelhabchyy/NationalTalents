@@ -1139,6 +1139,132 @@
   .talia-page .nav { background: transparent; }
   body.talia-active .nav.scrolled { background: rgba(13,13,13,0.92); border-bottom: 1px solid var(--line); }
 
+  /* ====== TĀLIA DRAFTING-CANVAS DESIGN LANGUAGE ======
+     Reusable workspace identity used across all Tālia pages:
+     corner brackets, dotted grid, monospace meta labels,
+     drawn-line dividers, and materialize-on-reveal cards.
+  */
+  .talia-canvas-frame {
+    position: relative;
+    padding: 56px 36px;
+    background: linear-gradient(180deg, #fbf7ee 0%, #f6efe1 100%);
+    border: 1px solid var(--talia-line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  /* Dotted graph-paper background, soft radial mask so it fades at edges */
+  .talia-canvas-frame::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(58,52,44,0.13) 1px, transparent 1.5px);
+    background-size: 20px 20px;
+    pointer-events: none;
+    opacity: 0.7;
+    mask-image: radial-gradient(ellipse at center, black 55%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 100%);
+  }
+  .talia-canvas-frame > * { position: relative; z-index: 1; }
+  /* Corner brackets (architect's frame) */
+  .talia-frame-bracket {
+    position: absolute;
+    width: 20px; height: 20px;
+    border: 1.5px solid var(--talia-coral);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .talia-frame-bracket.tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+  .talia-frame-bracket.tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+  .talia-frame-bracket.bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+  .talia-frame-bracket.br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+  /* Monospace meta labels at corners */
+  .talia-frame-meta {
+    position: absolute;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--talia-muted);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .talia-frame-meta.top-left     { top: 18px; left: 40px; }
+  .talia-frame-meta.top-right    { top: 18px; right: 40px; }
+  .talia-frame-meta.bottom-left  { bottom: 18px; left: 40px; }
+  .talia-frame-meta.bottom-right { bottom: 18px; right: 40px; }
+  .talia-frame-meta .accent { color: var(--talia-coral); font-weight: 500; }
+
+  /* Small monospace section label that sits above an h2 */
+  .talia-section-label {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--talia-coral);
+    margin-bottom: 14px;
+  }
+  .talia-section-label::before {
+    content: '';
+    width: 24px; height: 1.5px;
+    background: var(--talia-coral);
+    box-shadow: 0 0 6px rgba(231,106,60,0.5);
+  }
+
+  /* Drawn-line divider between Tālia sections.
+     A thin SVG line that fills in as you scroll past it. */
+  .talia-divider {
+    position: relative;
+    height: 64px;
+    overflow: hidden;
+    --talia-divider-progress: 0;
+  }
+  .talia-divider svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .talia-divider .div-track {
+    stroke: rgba(231,106,60,0.18);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 5;
+    fill: none;
+  }
+  .talia-divider .div-drawn {
+    stroke: url(#taliaDividerGrad);
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: calc(1000 * (1 - var(--talia-divider-progress)));
+    transition: stroke-dashoffset .1s linear;
+    filter: drop-shadow(0 0 4px rgba(231,106,60,0.55));
+  }
+  .talia-divider .div-dot {
+    fill: var(--talia-coral);
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .talia-divider[data-progress-active="true"] .div-dot { opacity: 1; }
+
+  /* Enhanced reveal on Tālia pages: materialize-on-reach (offset + blur + opacity) */
+  .talia-page .reveal { opacity: 0; transform: translateY(28px); filter: blur(6px); transition: opacity .8s ease, transform .8s cubic-bezier(0.2, 0.8, 0.2, 1), filter .8s ease; }
+  .talia-page .reveal.in-view { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+  /* Make .why-card and program cards feel cohesive with the canvas language */
+  .talia-page .why-card { transition: transform .35s ease; }
+  .talia-page .why-card:hover { transform: translateY(-4px); }
+
+  @media (max-width: 900px) {
+    .talia-canvas-frame { padding: 48px 22px; border-radius: 10px; }
+    .talia-frame-bracket { width: 16px; height: 16px; }
+    .talia-frame-meta { font-size: 9px; }
+    .talia-frame-meta.top-left, .talia-frame-meta.bottom-left { left: 30px; }
+    .talia-frame-meta.top-right, .talia-frame-meta.bottom-right { right: 30px; }
+    .talia-section-label { font-size: 10px; }
+    .talia-divider { height: 48px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .talia-divider .div-drawn { transition: none; }
+    .talia-page .reveal { transition-duration: 0.01ms; filter: none; }
+  }
+
   /* Tālia hero with stamp collage */
   .talia-hero {
     position: relative;
@@ -3473,27 +3599,52 @@
     </div>
   </section>
 
+  <div class="talia-divider"><svg viewBox="0 0 1000 64" preserveAspectRatio="none"><defs><linearGradient id="taliaDividerGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#e76a3c" stop-opacity="0.3"/><stop offset="50%" stop-color="#e76a3c" stop-opacity="1"/><stop offset="100%" stop-color="#ffc89a" stop-opacity="1"/></linearGradient></defs><path class="div-track" d="M 0 32 L 1000 32"/><path class="div-drawn" d="M 0 32 L 1000 32"/><circle class="div-dot" cx="500" cy="32" r="4"/></svg></div>
+
   <section class="talia-section">
     <div class="container">
+      <div class="talia-section-label">// 01 — The Experience</div>
       <h2>The Tālia Experience</h2>
-      <div class="talia-experience-grid">
-        <div class="talia-experience-text reveal">
-          <h4>Rooted in Saudi Arabia and connected to the world</h4>
-          <p>Tālia is a cultural program designed to create new pathways for learning, exchange, and global understanding, contributing to a more vibrant and globally connected society.</p>
-          <p>Tālia offers a different kind of cultural experience abroad — one that goes beyond what is seen, into how art, culture, and institutions actually operate.</p>
-          <p>Instead of moving from one landmark to another, each program provides access to leading cultural institutions, exhibitions, and creative spaces. Museums, galleries, and cultural environments are experienced with context, guidance, and depth.</p>
-          <p>As part of a structured cultural immersion program, each journey connects people, ideas, and institutions, offering a deeper understanding of global art and cultural ecosystems.</p>
-          <p><strong>Tālia is part of National Talents Company,</strong> supporting the development of cultural professionals and globally curious individuals in Saudi Arabia.</p>
+      <div class="talia-canvas-frame reveal">
+        <span class="talia-frame-bracket tl"></span>
+        <span class="talia-frame-bracket tr"></span>
+        <span class="talia-frame-bracket bl"></span>
+        <span class="talia-frame-bracket br"></span>
+        <div class="talia-frame-meta top-left">// experience.brief</div>
+        <div class="talia-frame-meta top-right"><span class="accent">KSA</span> ↔ world</div>
+        <div class="talia-frame-meta bottom-left">national talents · t&#257;lia</div>
+        <div class="talia-frame-meta bottom-right">ref · t01</div>
+        <div class="talia-experience-grid">
+          <div class="talia-experience-text reveal">
+            <h4>Rooted in Saudi Arabia and connected to the world</h4>
+            <p>Tālia is a cultural program designed to create new pathways for learning, exchange, and global understanding, contributing to a more vibrant and globally connected society.</p>
+            <p>Tālia offers a different kind of cultural experience abroad — one that goes beyond what is seen, into how art, culture, and institutions actually operate.</p>
+            <p>Instead of moving from one landmark to another, each program provides access to leading cultural institutions, exhibitions, and creative spaces. Museums, galleries, and cultural environments are experienced with context, guidance, and depth.</p>
+            <p>As part of a structured cultural immersion program, each journey connects people, ideas, and institutions, offering a deeper understanding of global art and cultural ecosystems.</p>
+            <p><strong>Tālia is part of National Talents Company,</strong> supporting the development of cultural professionals and globally curious individuals in Saudi Arabia.</p>
+          </div>
+          <div class="talia-experience-image reveal reveal-delay-2"></div>
         </div>
-        <div class="talia-experience-image reveal reveal-delay-2"></div>
       </div>
     </div>
   </section>
 
+  <div class="talia-divider"><svg viewBox="0 0 1000 64" preserveAspectRatio="none"><path class="div-track" d="M 0 32 L 1000 32"/><path class="div-drawn" d="M 0 32 L 1000 32"/><circle class="div-dot" cx="500" cy="32" r="4"/></svg></div>
+
   <section class="talia-section why-talia">
     <div class="container">
+      <div class="talia-section-label">// 02 — Principles</div>
       <h2>Why Tālia</h2>
-      <div class="why-grid">
+      <div class="talia-canvas-frame reveal">
+        <span class="talia-frame-bracket tl"></span>
+        <span class="talia-frame-bracket tr"></span>
+        <span class="talia-frame-bracket bl"></span>
+        <span class="talia-frame-bracket br"></span>
+        <div class="talia-frame-meta top-left">// principles.idx</div>
+        <div class="talia-frame-meta top-right"><span class="accent">04</span> traits</div>
+        <div class="talia-frame-meta bottom-left">structured · curated · global</div>
+        <div class="talia-frame-meta bottom-right">ref · t02</div>
+        <div class="why-grid">
         <div class="why-card reveal">
           <div class="why-icon">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8 2 4 4 4 7v3c0 5 8 12 8 12s8-7 8-12V7c0-3-4-5-8-5zm-3 7h6v6H9V9z"/></svg>
@@ -3519,8 +3670,11 @@
           <p><strong>Understand the creative ecosystem</strong> and explore how festivals, cultural initiatives, institutions, and funding models support the global arts and culture sector</p>
         </div>
       </div>
+      </div><!-- /.talia-canvas-frame (Why) -->
     </div>
   </section>
+
+  <div class="talia-divider"><svg viewBox="0 0 1000 64" preserveAspectRatio="none"><path class="div-track" d="M 0 32 L 1000 32"/><path class="div-drawn" d="M 0 32 L 1000 32"/><circle class="div-dot" cx="500" cy="32" r="4"/></svg></div>
 
   <div class="talia-contact-cta">
     <button class="talia-contact-btn" onclick="goToPage('contact')">Contact us</button>
@@ -3539,6 +3693,16 @@
 
   <section class="programs-list">
     <div class="container">
+      <div class="talia-section-label">// 03 — Catalog</div>
+      <div class="talia-canvas-frame reveal">
+        <span class="talia-frame-bracket tl"></span>
+        <span class="talia-frame-bracket tr"></span>
+        <span class="talia-frame-bracket bl"></span>
+        <span class="talia-frame-bracket br"></span>
+        <div class="talia-frame-meta top-left">// programs.idx</div>
+        <div class="talia-frame-meta top-right"><span class="accent">06</span> destinations</div>
+        <div class="talia-frame-meta bottom-left">rome · paris · istanbul · tokyo · berlin · barcelona</div>
+        <div class="talia-frame-meta bottom-right">ref · t03</div>
       <div class="program-cards-grid">
         <div class="program-listing-card reveal" onclick="goToPage('talia-rome')">
           <div class="program-listing-image rome">
@@ -3615,6 +3779,7 @@
           </div>
         </div>
       </div>
+      </div><!-- /.talia-canvas-frame (Programs) -->
     </div>
   </section>
 
@@ -3944,6 +4109,7 @@
 
   <section class="booking-body">
     <div class="booking-container">
+      <div class="talia-section-label">// 04 — Booking</div>
       <div class="booking-steps">
         <div class="booking-step active">
           <div class="booking-step-circle">●</div>
@@ -3956,6 +4122,15 @@
         </div>
       </div>
 
+      <div class="talia-canvas-frame reveal">
+        <span class="talia-frame-bracket tl"></span>
+        <span class="talia-frame-bracket tr"></span>
+        <span class="talia-frame-bracket bl"></span>
+        <span class="talia-frame-bracket br"></span>
+        <div class="talia-frame-meta top-left">// booking · rome.dat</div>
+        <div class="talia-frame-meta top-right"><span class="accent">step 01</span> of 02</div>
+        <div class="talia-frame-meta bottom-left">secure · encrypted · pci</div>
+        <div class="talia-frame-meta bottom-right">ref · t04</div>
       <div class="booking-grid">
         <div>
           <div class="traveler-card">
@@ -4023,6 +4198,7 @@
           <button class="proceed-btn" onclick="this.textContent='Processing...'; setTimeout(()=>{this.textContent='Booking confirmed ✓'; this.style.background='#7a9b6a';}, 1200);">Proceed to Payment</button>
         </div>
       </div>
+      </div><!-- /.talia-canvas-frame (Booking) -->
     </div>
   </section>
 
@@ -4403,6 +4579,25 @@
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => { buildPath(); update(); });
     }
+  });
+
+  // ============ TĀLIA DRAWN-LINE DIVIDERS ============
+  // Each .talia-divider draws its line as the viewer scrolls past it.
+  document.querySelectorAll('.talia-divider').forEach(divider => {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const r = divider.getBoundingClientRect();
+      const focus = window.innerHeight * 0.55;
+      const span  = window.innerHeight * 0.45;
+      const raw = (focus - r.top) / span;
+      const progress = Math.max(0, Math.min(1, raw));
+      divider.style.setProperty('--talia-divider-progress', progress);
+      divider.dataset.progressActive = progress > 0.001 ? 'true' : 'false';
+    };
+    const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    update();
   });
 </script>
 </body>
