@@ -1,22 +1,946 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf6ee">
   <title>Content Admin · National Talents</title>
-  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fraunces:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
   <style>
-    body { background: #faf6ee; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    :root {
+      --talia-cream: #faf6ee;
+      --talia-ink: #2a2520;
+      --talia-text: #3a342c;
+      --talia-muted: #7a7268;
+      --talia-line: #e6dfd0;
+      --talia-coral: #e76a3c;
+      --talia-coral-dark: #d05828;
+      --talia-olive: #a89968;
+      --talia-green: #6f8a5a;
+      --talia-red: #c44a3a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Inter', -apple-system, sans-serif; background: var(--talia-cream); color: var(--talia-text); min-height: 100vh; }
+    body { font-size: 14px; line-height: 1.6; }
+    a { color: var(--talia-coral); }
+    button { font-family: inherit; cursor: pointer; }
+
+    /* ============ Gate (password) ============ */
+    .gate-wrap, .pat-wrap, .editor-wrap { display: none; min-height: 100vh; }
+    .gate-wrap.active, .pat-wrap.active, .editor-wrap.active { display: block; }
+    .gate-wrap, .pat-wrap {
+      align-items: center; justify-content: center; display: flex;
+      flex-direction: column;
+      padding: 40px 20px;
+    }
+    .gate-wrap.active, .pat-wrap.active { display: flex; }
+
+    .gate-card {
+      position: relative;
+      width: 100%; max-width: 440px;
+      background: white;
+      padding: 56px 36px 40px;
+      border: 1px solid var(--talia-line);
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(42,37,32,0.08);
+    }
+    .gate-card::before, .gate-card::after,
+    .gate-card .bracket-tl, .gate-card .bracket-tr,
+    .gate-card .bracket-bl, .gate-card .bracket-br {
+      content: ''; position: absolute;
+      width: 18px; height: 18px;
+      border: 1.5px solid var(--talia-coral);
+    }
+    .gate-card .bracket-tl { top: 12px; left: 12px; border-right: none; border-bottom: none; }
+    .gate-card .bracket-tr { top: 12px; right: 12px; border-left: none; border-bottom: none; }
+    .gate-card .bracket-bl { bottom: 12px; left: 12px; border-right: none; border-top: none; }
+    .gate-card .bracket-br { bottom: 12px; right: 12px; border-left: none; border-top: none; }
+    .gate-card::before, .gate-card::after { display: none; }
+    .gate-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--talia-coral);
+      margin-bottom: 12px;
+    }
+    .gate-card h1 {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--talia-ink);
+      margin-bottom: 6px;
+    }
+    .gate-card .sub { color: var(--talia-muted); font-size: 13px; margin-bottom: 28px; }
+    .gate-card label {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--talia-muted);
+      margin-bottom: 8px;
+    }
+    .gate-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-family: inherit; font-size: 15px;
+      border: 1.5px solid var(--talia-line);
+      border-radius: 8px;
+      background: var(--talia-cream);
+      color: var(--talia-ink);
+      transition: border-color .2s, background .2s;
+    }
+    .gate-input:focus {
+      outline: none;
+      border-color: var(--talia-coral);
+      background: white;
+    }
+    .gate-btn {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px 20px;
+      background: var(--talia-coral);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      font-weight: 500;
+      font-size: 15px;
+      transition: background .2s;
+    }
+    .gate-btn:hover { background: var(--talia-coral-dark); }
+    .gate-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .gate-error {
+      margin-top: 12px;
+      color: var(--talia-red);
+      font-size: 13px;
+      min-height: 18px;
+    }
+    .gate-hint { margin-top: 24px; font-size: 12px; color: var(--talia-muted); line-height: 1.5; }
+    .gate-hint a { word-break: break-all; }
+
+    /* ============ Editor ============ */
+    .editor-wrap.active { display: block; }
+    .editor-head {
+      position: sticky; top: 0;
+      background: var(--talia-cream);
+      border-bottom: 1px solid var(--talia-line);
+      padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px;
+      z-index: 10;
+    }
+    .editor-brand {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--talia-muted);
+    }
+    .editor-brand strong { color: var(--talia-ink); }
+    .editor-head-actions { display: flex; gap: 8px; align-items: center; }
+    .editor-head-actions button {
+      padding: 8px 14px;
+      background: transparent;
+      border: 1px solid var(--talia-line);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--talia-text);
+      transition: all .2s;
+    }
+    .editor-head-actions button:hover { border-color: var(--talia-coral); color: var(--talia-coral); }
+    .editor-head-actions button.preview {
+      background: var(--talia-coral);
+      color: white;
+      border-color: var(--talia-coral);
+    }
+    .editor-head-actions button.preview:hover { background: var(--talia-coral-dark); }
+
+    .editor-tabs {
+      display: flex; gap: 4px;
+      padding: 24px 24px 0;
+      max-width: 1100px; margin: 0 auto;
+    }
+    .editor-tab {
+      padding: 10px 18px;
+      background: transparent;
+      border: 1px solid var(--talia-line);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      font-size: 13px;
+      color: var(--talia-muted);
+      transition: all .2s;
+    }
+    .editor-tab.active {
+      background: white;
+      color: var(--talia-ink);
+      border-color: var(--talia-line);
+    }
+    .editor-tab:not(.active):hover { color: var(--talia-text); }
+
+    .editor-panel {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      background: white;
+      border: 1px solid var(--talia-line);
+      border-radius: 0 12px 12px 12px;
+      display: none;
+    }
+    .editor-panel.active { display: block; }
+
+    /* Status banner */
+    .status-bar {
+      max-width: 1100px;
+      margin: 16px auto 0;
+      padding: 0 24px;
+    }
+    .status {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+    .status.show { display: block; }
+    .status.ok    { background: #e8f0e2; color: var(--talia-green); border: 1px solid #cbd9bd; }
+    .status.err   { background: #f8e0db; color: var(--talia-red); border: 1px solid #ecbcb1; }
+    .status.info  { background: #f0eada; color: var(--talia-text); border: 1px solid var(--talia-line); }
+
+    /* List entries */
+    .entry-list { display: flex; flex-direction: column; gap: 12px; }
+    .entry {
+      border: 1px solid var(--talia-line);
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .entry:hover { border-color: rgba(231,106,60,0.4); }
+    .entry-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed var(--talia-line);
+    }
+    .entry-title {
+      font-family: 'Fraunces', serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--talia-ink);
+    }
+    .entry-actions { display: flex; gap: 6px; }
+    .entry-actions button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      border: 1px solid var(--talia-line);
+      background: transparent;
+      color: var(--talia-text);
+      transition: all .2s;
+    }
+    .entry-actions button:hover { border-color: var(--talia-coral); color: var(--talia-coral); }
+    .entry-actions button.danger:hover { border-color: var(--talia-red); color: var(--talia-red); }
+    .entry-fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .field { display: flex; flex-direction: column; gap: 4px; }
+    .field.wide { grid-column: 1 / -1; }
+    .field label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--talia-muted);
+    }
+    .field input[type="text"],
+    .field input[type="number"],
+    .field input[type="email"],
+    .field textarea,
+    .field select {
+      padding: 8px 10px;
+      border: 1px solid var(--talia-line);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--talia-ink);
+      background: var(--talia-cream);
+      transition: border-color .2s, background .2s;
+    }
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--talia-coral);
+      background: white;
+    }
+    .field textarea { min-height: 70px; resize: vertical; line-height: 1.5; }
+    .field-check { flex-direction: row; align-items: center; gap: 8px; }
+    .field-check input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--talia-coral); cursor: pointer; }
+    .field-check label { font-size: 12px; text-transform: none; letter-spacing: 0; color: var(--talia-text); cursor: pointer; }
+
+    .add-btn {
+      padding: 12px 20px;
+      background: transparent;
+      border: 1.5px dashed var(--talia-coral);
+      border-radius: 8px;
+      color: var(--talia-coral);
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
+      transition: all .2s;
+      margin-top: 12px;
+    }
+    .add-btn:hover { background: rgba(231,106,60,0.08); }
+
+    .panel-foot {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--talia-line);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; flex-wrap: wrap;
+    }
+    .save-btn {
+      padding: 12px 28px;
+      background: var(--talia-coral);
+      color: white;
+      border: none;
+      border-radius: 100px;
+      font-size: 14px; font-weight: 500;
+      transition: all .2s;
+    }
+    .save-btn:hover { background: var(--talia-coral-dark); }
+    .save-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    .panel-foot-note {
+      font-size: 11px;
+      color: var(--talia-muted);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Settings panel fields */
+    #panel-settings .entry-fields { grid-template-columns: 1fr; }
+    #panel-settings .field input,
+    #panel-settings .field textarea { font-size: 14px; }
+
+    .helper {
+      font-size: 11px; color: var(--talia-muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 700px) {
+      .editor-tabs { padding: 16px 12px 0; flex-wrap: wrap; }
+      .editor-panel { padding: 16px; margin: 0 12px; }
+      .editor-head { padding: 12px 14px; flex-direction: column; align-items: stretch; }
+      .editor-head-actions { justify-content: flex-end; }
+    }
   </style>
 </head>
 <body>
-  <!--
-    Decap CMS — runs entirely in the browser.
-    Configuration lives in ./config.yml.
-    When the admin clicks "Login", Decap authenticates with GitHub and
-    commits changes back to this repo. The GitHub Actions deploy workflow
-    then rebuilds the site automatically.
-  -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+  <!-- Step 1: Password gate -->
+  <div class="gate-wrap active" id="gate">
+    <form class="gate-card" id="gateForm" autocomplete="off">
+      <span class="bracket-tl"></span>
+      <span class="bracket-tr"></span>
+      <span class="bracket-bl"></span>
+      <span class="bracket-br"></span>
+      <div class="gate-tag">// access.lock</div>
+      <h1>Content Admin</h1>
+      <p class="sub">Enter the password to access the editor.</p>
+      <label for="gatePw">Password</label>
+      <input class="gate-input" id="gatePw" type="password" required autofocus>
+      <button class="gate-btn" type="submit">Unlock</button>
+      <div class="gate-error" id="gateError"></div>
+      <div class="gate-hint">National Talents Company · Admin · Soft gate.</div>
+    </form>
+  </div>
+
+  <!-- Step 2: GitHub PAT prompt -->
+  <div class="gate-wrap" id="patPrompt">
+    <form class="gate-card" id="patForm" autocomplete="off">
+      <span class="bracket-tl"></span>
+      <span class="bracket-tr"></span>
+      <span class="bracket-bl"></span>
+      <span class="bracket-br"></span>
+      <div class="gate-tag">// github.token</div>
+      <h1>One-time GitHub setup</h1>
+      <p class="sub">Paste a GitHub Personal Access Token. It's stored only in this browser and used to commit your edits.</p>
+      <label for="patInput">GitHub Personal Access Token</label>
+      <input class="gate-input" id="patInput" type="password" required placeholder="github_pat_… or ghp_…">
+      <button class="gate-btn" type="submit">Save token &amp; continue</button>
+      <div class="gate-error" id="patError"></div>
+      <div class="gate-hint">
+        Create one at
+        <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens/new</a>.
+        Give it write access to the <em>NationalTalents</em> repository's <strong>Contents</strong>.
+        <br><br>
+        Fine-grained tokens are recommended. Expires after up to 1 year — you'll be prompted to enter a new one when this expires.
+      </div>
+    </form>
+  </div>
+
+  <!-- Step 3: Editor -->
+  <div class="editor-wrap" id="editor">
+    <header class="editor-head">
+      <div class="editor-brand">
+        <span>//</span> <strong>nt · content admin</strong> · <span id="repoLabel">michelhabchyy/NationalTalents@main</span>
+      </div>
+      <div class="editor-head-actions">
+        <button class="preview" id="previewBtn" type="button">View site</button>
+        <button id="forgetTokenBtn" type="button">Forget token</button>
+        <button id="lockBtn" type="button">Lock</button>
+      </div>
+    </header>
+
+    <nav class="editor-tabs">
+      <button class="editor-tab active" data-tab="programs">Tālia Programs</button>
+      <button class="editor-tab" data-tab="jobs">Open Roles</button>
+      <button class="editor-tab" data-tab="settings">Site Text</button>
+    </nav>
+
+    <div class="status-bar"><div class="status" id="statusEl"></div></div>
+
+    <!-- Programs panel -->
+    <section class="editor-panel active" id="panel-programs">
+      <div class="entry-list" id="programsList"></div>
+      <button class="add-btn" id="addProgramBtn" type="button">+ Add a program</button>
+      <div class="panel-foot">
+        <span class="panel-foot-note">file · content/programs.yml</span>
+        <button class="save-btn" id="saveProgramsBtn" type="button">Save changes</button>
+      </div>
+    </section>
+
+    <!-- Jobs panel -->
+    <section class="editor-panel" id="panel-jobs">
+      <div class="entry-list" id="jobsList"></div>
+      <button class="add-btn" id="addJobBtn" type="button">+ Add a role</button>
+      <div class="panel-foot">
+        <span class="panel-foot-note">file · content/jobs.yml</span>
+        <button class="save-btn" id="saveJobsBtn" type="button">Save changes</button>
+      </div>
+    </section>
+
+    <!-- Settings panel -->
+    <section class="editor-panel" id="panel-settings">
+      <div class="entry-list" id="settingsList"></div>
+      <div class="panel-foot">
+        <span class="panel-foot-note">file · content/settings.yml</span>
+        <button class="save-btn" id="saveSettingsBtn" type="button">Save changes</button>
+      </div>
+    </section>
+
+    <div style="height: 60px"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script>
+  (function () {
+    // ============================================================
+    // CONFIG — change ADMIN_PASSWORD here and commit to update.
+    // (Soft gate — anyone with browser access can read it. Use the
+    // GitHub PAT permissions as your real security boundary.)
+    // ============================================================
+    const ADMIN_PASSWORD = 'talents2026';
+    const REPO_OWNER  = 'michelhabchyy';
+    const REPO_NAME   = 'NationalTalents';
+    const REPO_BRANCH = 'main';
+
+    const FILES = {
+      programs: 'content/programs.yml',
+      jobs:     'content/jobs.yml',
+      settings: 'content/settings.yml',
+    };
+
+    // State held in memory while editor is open
+    const state = {
+      programs: { data: null, sha: null, dirty: false },
+      jobs:     { data: null, sha: null, dirty: false },
+      settings: { data: null, sha: null, dirty: false },
+    };
+
+    // ============================================================
+    // Step 1: Gate
+    // ============================================================
+    const $ = (id) => document.getElementById(id);
+    const gateForm  = $('gateForm');
+    const gatePw    = $('gatePw');
+    const gateError = $('gateError');
+
+    gateForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (gatePw.value === ADMIN_PASSWORD) {
+        sessionStorage.setItem('admin_unlocked', '1');
+        gateError.textContent = '';
+        proceedAfterGate();
+      } else {
+        gateError.textContent = 'Wrong password.';
+        gatePw.select();
+      }
+    });
+
+    function proceedAfterGate() {
+      const token = localStorage.getItem('gh_pat');
+      if (token) {
+        showEditor();
+      } else {
+        showPatPrompt();
+      }
+    }
+
+    // If already unlocked in this tab, skip the gate
+    if (sessionStorage.getItem('admin_unlocked')) {
+      proceedAfterGate();
+    }
+
+    // ============================================================
+    // Step 2: PAT
+    // ============================================================
+    const patForm  = $('patForm');
+    const patInput = $('patInput');
+    const patError = $('patError');
+
+    patForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = patInput.value.trim();
+      if (!token) { patError.textContent = 'Token cannot be empty.'; return; }
+      patError.textContent = 'Verifying…';
+      try {
+        const ok = await verifyToken(token);
+        if (!ok) {
+          patError.textContent = 'Token rejected. Make sure it has Contents: write on this repo.';
+          return;
+        }
+        localStorage.setItem('gh_pat', token);
+        patError.textContent = '';
+        showEditor();
+      } catch (err) {
+        patError.textContent = 'Verification failed: ' + (err && err.message ? err.message : err);
+      }
+    });
+
+    async function verifyToken(token) {
+      // Cheapest check: read the repo metadata. Requires Contents:read at minimum.
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}`, {
+        headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' }
+      });
+      return r.ok;
+    }
+
+    // ============================================================
+    // UI plumbing
+    // ============================================================
+    function showGate()      { showStep('gate'); }
+    function showPatPrompt() { showStep('patPrompt'); patInput.value = ''; setTimeout(() => patInput.focus(), 50); }
+    function showEditor()    { showStep('editor'); initEditor(); }
+
+    function showStep(id) {
+      ['gate','patPrompt','editor'].forEach(s => $(s).classList.toggle('active', s === id));
+    }
+
+    $('lockBtn').addEventListener('click', () => {
+      sessionStorage.removeItem('admin_unlocked');
+      gatePw.value = '';
+      showGate();
+    });
+    $('forgetTokenBtn').addEventListener('click', () => {
+      if (!confirm('Remove your GitHub token from this browser?')) return;
+      localStorage.removeItem('gh_pat');
+      showPatPrompt();
+    });
+    $('previewBtn').addEventListener('click', () => {
+      window.open('../', '_blank', 'noopener');
+    });
+
+    // Tabs
+    document.querySelectorAll('.editor-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.editor-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.editor-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        $('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Status helper
+    const statusEl = $('statusEl');
+    let statusTimer = null;
+    function status(msg, kind = 'info', persist = false) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status show ' + kind;
+      if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+      if (!persist) statusTimer = setTimeout(() => statusEl.classList.remove('show'), 4500);
+    }
+
+    // ============================================================
+    // GitHub Contents API helpers
+    // ============================================================
+    function authHeaders() {
+      const token = localStorage.getItem('gh_pat');
+      return {
+        Authorization: 'Bearer ' + token,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      };
+    }
+
+    async function readFile(path) {
+      const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}?ref=${REPO_BRANCH}`;
+      const r = await fetch(url, { headers: authHeaders() });
+      if (!r.ok) throw new Error(`GET ${path}: HTTP ${r.status}`);
+      const j = await r.json();
+      // content is base64-encoded
+      const text = atob(j.content.replace(/\n/g, ''));
+      // Decode UTF-8 properly
+      const bytes = Uint8Array.from(text, c => c.charCodeAt(0));
+      const decoded = new TextDecoder('utf-8').decode(bytes);
+      return { text: decoded, sha: j.sha };
+    }
+
+    async function writeFile(path, newText, sha, message) {
+      // Encode UTF-8 → base64
+      const bytes = new TextEncoder().encode(newText);
+      let binary = '';
+      bytes.forEach(b => binary += String.fromCharCode(b));
+      const content = btoa(binary);
+
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodeURIComponent(path)}`, {
+        method: 'PUT',
+        headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message || `chore(admin): update ${path}`,
+          content,
+          sha,
+          branch: REPO_BRANCH
+        }),
+      });
+      if (!r.ok) {
+        const errBody = await r.text().catch(() => '');
+        throw new Error(`PUT ${path}: HTTP ${r.status} — ${errBody.slice(0, 200)}`);
+      }
+      const j = await r.json();
+      return j.content.sha;
+    }
+
+    // ============================================================
+    // Editor init — load all three files
+    // ============================================================
+    async function initEditor() {
+      status('Loading content from GitHub…', 'info', true);
+      try {
+        const [p, j, s] = await Promise.all([
+          readFile(FILES.programs),
+          readFile(FILES.jobs),
+          readFile(FILES.settings),
+        ]);
+        state.programs.data = jsyaml.load(p.text) || { programs: [] };
+        state.programs.sha  = p.sha;
+        state.jobs.data     = jsyaml.load(j.text) || { jobs: [] };
+        state.jobs.sha      = j.sha;
+        state.settings.data = jsyaml.load(s.text) || {};
+        state.settings.sha  = s.sha;
+        renderPrograms();
+        renderJobs();
+        renderSettings();
+        status('Loaded. Make your edits and click Save changes.', 'ok');
+      } catch (err) {
+        // Token might be expired / revoked
+        if (err.message && err.message.includes('401')) {
+          status('Token rejected by GitHub. Re-enter it.', 'err', true);
+          localStorage.removeItem('gh_pat');
+          setTimeout(() => showPatPrompt(), 800);
+          return;
+        }
+        status('Failed to load: ' + err.message, 'err', true);
+      }
+    }
+
+    // ============================================================
+    // Programs panel
+    // ============================================================
+    function renderPrograms() {
+      const root = $('programsList');
+      const list = (state.programs.data && state.programs.data.programs) || [];
+      root.innerHTML = '';
+      list.forEach((p, i) => root.appendChild(programEntry(p, i)));
+    }
+
+    function programEntry(p, idx) {
+      const el = document.createElement('div');
+      el.className = 'entry';
+      el.dataset.idx = idx;
+      el.innerHTML = `
+        <div class="entry-head">
+          <div class="entry-title">${escapeHtml(p.name || 'Untitled program')}</div>
+          <div class="entry-actions">
+            <button data-act="up" type="button" title="Move up">↑</button>
+            <button data-act="down" type="button" title="Move down">↓</button>
+            <button data-act="del" type="button" class="danger" title="Remove">Remove</button>
+          </div>
+        </div>
+        <div class="entry-fields">
+          <div class="field">
+            <label>Slug (id)</label>
+            <input type="text" data-k="id" value="${escapeAttr(p.id)}">
+            <div class="helper">Lowercase, no spaces (rome, paris…). Also used as a CSS class.</div>
+          </div>
+          <div class="field">
+            <label>Name</label>
+            <input type="text" data-k="name" value="${escapeAttr(p.name)}">
+          </div>
+          <div class="field">
+            <label>Duration label</label>
+            <input type="text" data-k="duration" value="${escapeAttr(p.duration)}" placeholder="6 days">
+          </div>
+          <div class="field">
+            <label>Country</label>
+            <input type="text" data-k="country" value="${escapeAttr(p.country)}">
+          </div>
+          <div class="field">
+            <label>Price label</label>
+            <input type="text" data-k="price" value="${escapeAttr(p.price)}" placeholder="From SAR 18,000">
+          </div>
+          <div class="field">
+            <label>Display order</label>
+            <input type="number" data-k="order" value="${p.order == null ? '' : p.order}">
+          </div>
+          <div class="field">
+            <label>Detail page slug (optional)</label>
+            <input type="text" data-k="detail_page" value="${escapeAttr(p.detail_page)}" placeholder="talia-rome">
+          </div>
+          <div class="field field-check">
+            <input type="checkbox" data-k="featured" id="feat-${idx}" ${p.featured ? 'checked' : ''}>
+            <label for="feat-${idx}">Featured</label>
+          </div>
+          <div class="field wide">
+            <label>Short description</label>
+            <textarea data-k="short">${escapeHtml(p.short || '')}</textarea>
+          </div>
+        </div>
+      `;
+      // Wire inputs
+      el.querySelectorAll('[data-k]').forEach(input => {
+        input.addEventListener('input', () => {
+          const k = input.dataset.k;
+          let v = input.type === 'checkbox' ? input.checked
+                : input.type === 'number'   ? (input.value === '' ? null : Number(input.value))
+                : input.value;
+          state.programs.data.programs[idx][k] = v;
+          state.programs.dirty = true;
+          if (k === 'name') el.querySelector('.entry-title').textContent = v || 'Untitled program';
+        });
+      });
+      // Wire actions
+      el.querySelectorAll('[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => programAction(btn.dataset.act, idx));
+      });
+      return el;
+    }
+
+    function programAction(act, idx) {
+      const arr = state.programs.data.programs;
+      if (act === 'del') {
+        if (!confirm('Remove "' + (arr[idx].name || 'this program') + '"?')) return;
+        arr.splice(idx, 1);
+      } else if (act === 'up' && idx > 0) {
+        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+      } else if (act === 'down' && idx < arr.length - 1) {
+        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
+      }
+      state.programs.dirty = true;
+      renderPrograms();
+    }
+
+    $('addProgramBtn').addEventListener('click', () => {
+      const arr = state.programs.data.programs;
+      const maxOrder = arr.reduce((m, p) => Math.max(m, p.order || 0), 0);
+      arr.push({
+        id: 'new-program',
+        featured: false,
+        order: maxOrder + 1,
+        name: 'New program',
+        short: '',
+        duration: '',
+        country: '',
+        price: '',
+        detail_page: ''
+      });
+      state.programs.dirty = true;
+      renderPrograms();
+    });
+
+    $('saveProgramsBtn').addEventListener('click', async () => {
+      await saveFile('programs', 'Update Tālia programs');
+    });
+
+    // ============================================================
+    // Jobs panel
+    // ============================================================
+    function renderJobs() {
+      const root = $('jobsList');
+      const list = (state.jobs.data && state.jobs.data.jobs) || [];
+      root.innerHTML = '';
+      list.forEach((j, i) => root.appendChild(jobEntry(j, i)));
+    }
+
+    function jobEntry(j, idx) {
+      const el = document.createElement('div');
+      el.className = 'entry';
+      el.innerHTML = `
+        <div class="entry-head">
+          <div class="entry-title">${escapeHtml(j.title || 'Untitled role')}</div>
+          <div class="entry-actions">
+            <button data-act="up" type="button">↑</button>
+            <button data-act="down" type="button">↓</button>
+            <button data-act="del" type="button" class="danger">Remove</button>
+          </div>
+        </div>
+        <div class="entry-fields">
+          <div class="field"><label>Title</label><input type="text" data-k="title" value="${escapeAttr(j.title)}"></div>
+          <div class="field"><label>Department</label><input type="text" data-k="department" value="${escapeAttr(j.department)}"></div>
+          <div class="field"><label>Location</label><input type="text" data-k="location" value="${escapeAttr(j.location)}"></div>
+          <div class="field"><label>Type</label><input type="text" data-k="type" value="${escapeAttr(j.type || 'Full-time')}"></div>
+          <div class="field"><label>Experience</label><input type="text" data-k="experience" value="${escapeAttr(j.experience)}"></div>
+          <div class="field"><label>Display order</label><input type="number" data-k="order" value="${j.order == null ? '' : j.order}"></div>
+        </div>
+      `;
+      el.querySelectorAll('[data-k]').forEach(input => {
+        input.addEventListener('input', () => {
+          const k = input.dataset.k;
+          let v = input.type === 'number' ? (input.value === '' ? null : Number(input.value)) : input.value;
+          state.jobs.data.jobs[idx][k] = v;
+          state.jobs.dirty = true;
+          if (k === 'title') el.querySelector('.entry-title').textContent = v || 'Untitled role';
+        });
+      });
+      el.querySelectorAll('[data-act]').forEach(btn => {
+        btn.addEventListener('click', () => jobAction(btn.dataset.act, idx));
+      });
+      return el;
+    }
+
+    function jobAction(act, idx) {
+      const arr = state.jobs.data.jobs;
+      if (act === 'del') {
+        if (!confirm('Remove "' + (arr[idx].title || 'this role') + '"?')) return;
+        arr.splice(idx, 1);
+      } else if (act === 'up' && idx > 0) {
+        [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+      } else if (act === 'down' && idx < arr.length - 1) {
+        [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]];
+      }
+      state.jobs.dirty = true;
+      renderJobs();
+    }
+
+    $('addJobBtn').addEventListener('click', () => {
+      const arr = state.jobs.data.jobs;
+      const maxOrder = arr.reduce((m, j) => Math.max(m, j.order || 0), 0);
+      arr.push({ title: 'New role', department: '', location: '', type: 'Full-time', experience: '', order: maxOrder + 1 });
+      state.jobs.dirty = true;
+      renderJobs();
+    });
+
+    $('saveJobsBtn').addEventListener('click', async () => {
+      await saveFile('jobs', 'Update open roles');
+    });
+
+    // ============================================================
+    // Settings panel — flat key/value fields
+    // ============================================================
+    const SETTINGS_SCHEMA = [
+      { key: 'hero_tag',          label: 'Hero badge text',                 group: 'Homepage' },
+      { key: 'hero_line_1',       label: 'Hero heading — line 1',           group: 'Homepage' },
+      { key: 'hero_line_2',       label: 'Hero heading — line 2',           group: 'Homepage' },
+      { key: 'hero_sub',          label: 'Hero subtitle',                   group: 'Homepage', textarea: true },
+      { key: 'talia_tagline',     label: 'Tālia hero tagline',              group: 'Tālia',    textarea: true },
+      { key: 'talia_apply_label', label: 'Tālia "Apply now" button label',  group: 'Tālia' },
+      { key: 'email_business',    label: 'Business email',                  group: 'Contact' },
+      { key: 'email_general',     label: 'General email',                   group: 'Contact' },
+      { key: 'email_careers',     label: 'Careers email',                   group: 'Contact' },
+      { key: 'email_press',       label: 'Press email',                     group: 'Contact' },
+    ];
+
+    function renderSettings() {
+      const root = $('settingsList');
+      root.innerHTML = '';
+      const data = state.settings.data || {};
+      // Group by section
+      const groups = {};
+      SETTINGS_SCHEMA.forEach(f => { (groups[f.group] = groups[f.group] || []).push(f); });
+      Object.keys(groups).forEach(group => {
+        const card = document.createElement('div');
+        card.className = 'entry';
+        card.innerHTML = `<div class="entry-head"><div class="entry-title">${escapeHtml(group)}</div></div><div class="entry-fields"></div>`;
+        const fields = card.querySelector('.entry-fields');
+        groups[group].forEach(f => {
+          const fieldEl = document.createElement('div');
+          fieldEl.className = 'field wide';
+          const value = data[f.key] || '';
+          fieldEl.innerHTML = f.textarea
+            ? `<label>${escapeHtml(f.label)}</label><textarea data-k="${f.key}">${escapeHtml(value)}</textarea>`
+            : `<label>${escapeHtml(f.label)}</label><input type="text" data-k="${f.key}" value="${escapeAttr(value)}">`;
+          fieldEl.querySelector('[data-k]').addEventListener('input', (e) => {
+            data[f.key] = e.target.value;
+            state.settings.dirty = true;
+          });
+          fields.appendChild(fieldEl);
+        });
+        root.appendChild(card);
+      });
+    }
+
+    $('saveSettingsBtn').addEventListener('click', async () => {
+      await saveFile('settings', 'Update site text');
+    });
+
+    // ============================================================
+    // Save flow — serialize to YAML, commit via API
+    // ============================================================
+    async function saveFile(key, msg) {
+      const s = state[key];
+      if (!s.data) return;
+      const btnId = 'save' + key[0].toUpperCase() + key.slice(1) + 'Btn';
+      const btn = $(btnId);
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        const yamlText = jsyaml.dump(s.data, { indent: 2, lineWidth: 100, noRefs: true });
+        const newSha = await writeFile(FILES[key], yamlText, s.sha, msg);
+        s.sha = newSha;
+        s.dirty = false;
+        status('Saved. The site will rebuild in ~1 minute.', 'ok');
+      } catch (err) {
+        if (err.message && err.message.includes('401')) {
+          status('Token rejected by GitHub. Re-enter it.', 'err', true);
+          localStorage.removeItem('gh_pat');
+          setTimeout(() => showPatPrompt(), 800);
+        } else if (err.message && err.message.includes('409')) {
+          status('Conflict: the file changed since you loaded it. Refresh and try again.', 'err', true);
+        } else {
+          status('Save failed: ' + err.message, 'err', true);
+        }
+      } finally {
+        btn.disabled = false; btn.textContent = 'Save changes';
+      }
+    }
+
+    // ============================================================
+    // Utils
+    // ============================================================
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[c]);
+    }
+    function escapeAttr(s) { return escapeHtml(s); }
+
+    // Warn if there are unsaved changes when navigating away
+    window.addEventListener('beforeunload', (e) => {
+      const dirty = state.programs.dirty || state.jobs.dirty || state.settings.dirty;
+      if (dirty) { e.preventDefault(); e.returnValue = ''; }
+    });
+  })();
+  </script>
 </body>
 </html>
