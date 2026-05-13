@@ -3,15 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>Redirecting…</title>
-  <meta http-equiv="refresh" content="0; url=/">
-  <link rel="canonical" href="/">
-  <script>window.location.replace('/');</script>
+  <script>
+    // Redirect to the site root, whether served at user.github.io/repo/ or a custom domain.
+    (function () {
+      var path = window.location.pathname;
+      var segments = path.split('/').filter(Boolean);
+      // On a project Pages site the first segment is the repo name; keep it.
+      // On a user site or custom domain there's no base prefix; segments will be the deep path.
+      var host = window.location.host;
+      var isProjectPages = /\.github\.io$/.test(host) && segments.length > 0;
+      var base = isProjectPages ? '/' + segments[0] + '/' : '/';
+      window.location.replace(base);
+    })();
+  </script>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #050505; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
     a { color: #ffd633; }
   </style>
 </head>
 <body>
-  <p>Redirecting to <a href="/">home</a>…</p>
+  <p>Redirecting to <a href="./">home</a>…</p>
 </body>
 </html>
