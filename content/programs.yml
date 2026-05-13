@@ -3,12 +3,13 @@ programs:
     featured: true
     order: 1
     name: Rome History Immersion
-    short: From ancient ruins to cutting-edge contemporary spaces, a 6-day deep exploration of Rome's art scenes.
+    short: >-
+      From ancient ruins to cutting-edge contemporary spaces, a 6-day deep exploration of Rome's art
+      scenes.
     duration: 6 days
     country: Italy
     price: From SAR 18,000
     detail_page: talia-rome
-
   - id: paris
     featured: false
     order: 2
@@ -17,8 +18,7 @@ programs:
     duration: 7 days
     country: France
     price: From SAR 22,000
-    detail_page: ""
-
+    detail_page: ''
   - id: istanbul
     featured: false
     order: 3
@@ -27,8 +27,7 @@ programs:
     duration: 5 days
     country: Türkiye
     price: From SAR 14,000
-    detail_page: ""
-
+    detail_page: ''
   - id: tokyo
     featured: false
     order: 4
@@ -37,8 +36,7 @@ programs:
     duration: 8 days
     country: Japan
     price: From SAR 32,000
-    detail_page: ""
-
+    detail_page: ''
   - id: berlin
     featured: false
     order: 5
@@ -47,8 +45,7 @@ programs:
     duration: 6 days
     country: Germany
     price: From SAR 19,000
-    detail_page: ""
-
+    detail_page: ''
   - id: barcelona
     featured: false
     order: 6
@@ -57,4 +54,13 @@ programs:
     duration: 5 days
     country: Spain
     price: From SAR 16,500
-    detail_page: ""
+    detail_page: ''
+  - id: new-program
+    featured: true
+    order: 7
+    name: New program
+    short: cbhdsgfuisqgfuiorfgioqfuois
+    duration: '7'
+    country: lebanon
+    price: '17000'
+    detail_page: talia-lebanon
