@@ -1548,85 +1548,173 @@
     line-height: 1.6;
   }
 
-  /* ============ ITINERARY: SCROLL-DRAWN FUTURISTIC TIMELINE ============ */
-  .itinerary-list {
-    display: flex; flex-direction: column; gap: 14px;
-    margin-top: 16px;
+  /* ============ ITINERARY: DRAFTING-CANVAS WORKSPACE ============ */
+  /* The canvas is a "drafting board" — the route is drawn onto it as you scroll. */
+  .route-canvas {
     position: relative;
-    padding-left: 44px;
-    --itin-progress: 0px;   /* set by JS: pixels of drawn line */
-    --itin-track-h: 0px;    /* set by JS: total track height in px */
+    margin-top: 18px;
+    padding: 28px 24px 28px 88px;
+    background: linear-gradient(180deg, #fbf7ee, #f6efe1);
+    border: 1px solid var(--talia-line);
+    border-radius: 10px;
+    overflow: hidden;
+    --route-progress: 0;        /* 0..1, set by JS based on scroll */
+    --route-head-x: 0px;
+    --route-head-y: 0px;
+    --route-path-length: 1000;  /* path's getTotalLength(), set by JS */
   }
-  /* Faint circuit-style track */
-  .itinerary-list::before {
-    content: '';
+  /* Dotted graph-paper grid */
+  .route-canvas-grid {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(58,52,44,0.13) 1px, transparent 1.5px);
+    background-size: 18px 18px;
+    background-position: 0 0;
+    pointer-events: none;
+    opacity: 0.7;
+    mask-image: radial-gradient(ellipse at center, black 55%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 55%, transparent 100%);
+  }
+  /* Corner brackets (architect's drawing frame) */
+  .route-canvas-bracket {
     position: absolute;
-    left: 13px; top: 18px;
-    width: 2px;
-    height: var(--itin-track-h, 100%);
-    background:
-      repeating-linear-gradient(
-        180deg,
-        rgba(231,106,60,0.18) 0 6px,
-        transparent 6px 10px
-      );
-    border-radius: 2px;
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--talia-coral);
     pointer-events: none;
   }
-  /* The drawn neon line, grows with scroll */
-  .itinerary-list::after {
-    content: '';
+  .route-canvas-bracket.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .route-canvas-bracket.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+  .route-canvas-bracket.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+  .route-canvas-bracket.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+  /* Tech-style meta labels */
+  .route-canvas-meta {
     position: absolute;
-    left: 13px; top: 18px;
-    width: 2px;
-    height: var(--itin-progress, 0px);
-    background: linear-gradient(180deg,
-      rgba(231,106,60,0.4) 0%,
-      var(--talia-coral) 25%,
-      var(--talia-coral) 80%,
-      #ffb892 100%);
-    border-radius: 2px;
-    box-shadow:
-      0 0 6px rgba(231,106,60,0.7),
-      0 0 14px rgba(231,106,60,0.4),
-      0 0 28px rgba(231,106,60,0.2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--talia-muted);
     pointer-events: none;
+  }
+  .route-canvas-meta.top-left     { top: 14px; left: 36px; }
+  .route-canvas-meta.top-right    { top: 14px; right: 36px; }
+  .route-canvas-meta.bottom-left  { bottom: 14px; left: 36px; }
+  .route-canvas-meta.bottom-right { bottom: 14px; right: 36px; }
+  .route-progress-readout { color: var(--talia-coral); font-weight: 500; }
+
+  /* The drawn-path SVG sits on the left side of the canvas */
+  .route-svg {
+    position: absolute;
+    left: 28px; top: 56px;
+    width: 44px; bottom: 56px;
+    pointer-events: none;
+    overflow: visible;
     z-index: 1;
-    transition: height .08s linear;
   }
-  /* Comet head following the leading edge of the line */
-  .itin-head {
+  .route-track {
+    fill: none;
+    stroke: rgba(231,106,60,0.18);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 5;
+    stroke-linecap: round;
+  }
+  .route-drawn {
+    fill: none;
+    stroke: url(#routeGrad);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: var(--route-path-length);
+    stroke-dashoffset: calc(var(--route-path-length) * (1 - var(--route-progress)));
+    transition: stroke-dashoffset .08s linear;
+    filter: drop-shadow(0 0 4px rgba(231,106,60,0.6))
+            drop-shadow(0 0 10px rgba(231,106,60,0.35));
+  }
+
+  /* Comet head glides to the leading edge of the drawn path */
+  .route-comet {
     position: absolute;
-    left: 7px;
-    top: calc(18px + var(--itin-progress, 0px) - 7px);
+    left: var(--route-head-x);
+    top: var(--route-head-y);
     width: 14px; height: 14px;
     border-radius: 50%;
     background: radial-gradient(circle, #fff 0%, var(--talia-coral) 55%, rgba(231,106,60,0) 80%);
     box-shadow:
       0 0 10px #fff,
-      0 0 18px var(--talia-coral),
-      0 0 34px rgba(231,106,60,0.6);
+      0 0 20px var(--talia-coral),
+      0 0 38px rgba(231,106,60,0.55);
+    transform: translate(-50%, -50%);
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     opacity: 0;
-    transition: opacity .3s ease, top .08s linear;
-    animation: itinHeadPulse 1.6s ease-in-out infinite;
+    transition: opacity .3s ease;
+    animation: routeCometPulse 1.4s ease-in-out infinite;
   }
-  .itinerary-list[data-progress-active="true"] .itin-head { opacity: 1; }
-  @keyframes itinHeadPulse {
-    0%, 100% { transform: scale(1); filter: brightness(1); }
-    50%      { transform: scale(1.35); filter: brightness(1.4); }
+  .route-canvas[data-progress-active="true"] .route-comet { opacity: 1; }
+  @keyframes routeCometPulse {
+    0%, 100% { filter: brightness(1) saturate(1); transform: translate(-50%, -50%) scale(1); }
+    50%      { filter: brightness(1.4) saturate(1.2); transform: translate(-50%, -50%) scale(1.3); }
   }
 
-  /* Items — hidden until the line "reaches" them */
-  .itinerary-item {
-    background: white;
+  /* Each route item: a node on the line + a card to the right */
+  .route-item {
+    position: relative;
+    display: block;
+    padding: 12px 0 12px 0;
+    z-index: 2;
+  }
+  .route-item + .route-item { margin-top: 14px; }
+
+  /* Node dot — sits in the path column on the left of the canvas */
+  .route-node {
+    position: absolute;
+    left: -38px;          /* offset back into the path column */
+    top: 18px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--talia-cream);
+    border: 2px solid rgba(231,106,60,0.3);
+    transition:
+      background .35s ease, border-color .35s ease,
+      transform .35s ease, box-shadow .35s ease;
+    z-index: 3;
+  }
+  .route-node::after {
+    /* Ring-ripple on first reach */
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 2px solid var(--talia-coral);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .route-item.reached .route-node {
+    background: var(--talia-coral);
+    border-color: var(--talia-coral);
+    box-shadow:
+      0 0 0 4px rgba(231,106,60,0.15),
+      0 0 18px rgba(231,106,60,0.65);
+    transform: scale(1.08);
+  }
+  .route-item.reached.just-reached .route-node::after {
+    animation: routeNodeRipple 1s ease-out forwards;
+  }
+  @keyframes routeNodeRipple {
+    0%   { opacity: 0.85; transform: scale(0.55); }
+    100% { opacity: 0;    transform: scale(2.6); }
+  }
+
+  /* Content card — content always visible (no accordion) */
+  .route-card {
+    position: relative;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     border: 1px solid var(--talia-line);
     border-radius: 8px;
-    overflow: hidden;
-    position: relative;
     opacity: 0;
-    transform: translateX(24px) scale(0.985);
+    transform: translateX(20px);
     filter: blur(4px);
     transition:
       transform .55s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -1636,81 +1724,66 @@
       box-shadow .35s ease,
       background .35s ease;
   }
-  /* Node dot */
-  .itinerary-item::before {
+  /* Leader line from the node to the card */
+  .route-card::before {
     content: '';
     position: absolute;
-    left: -38px; top: 14px;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--talia-cream);
-    border: 2px solid rgba(231,106,60,0.25);
-    transition: background .35s ease, border-color .35s ease, transform .35s ease, box-shadow .35s ease;
-    z-index: 2;
-  }
-  /* Ring-ripple emitted on activation */
-  .itinerary-item::after {
-    content: '';
-    position: absolute;
-    left: -44px; top: 8px;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    border: 2px solid var(--talia-coral);
+    left: -20px; top: 22px;
+    width: 18px; height: 1.5px;
+    background: linear-gradient(90deg, rgba(231,106,60,0.2), rgba(231,106,60,0.6));
     opacity: 0;
-    pointer-events: none;
-    z-index: 1;
+    transition: opacity .4s ease;
   }
-
-  /* Reached: line has drawn past this item's dot — item materializes */
-  .itinerary-item.reached {
+  .route-item.reached .route-card {
     opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateX(0);
     filter: blur(0);
   }
-  .itinerary-item.reached::before {
-    background: var(--talia-coral);
+  .route-item.reached .route-card::before { opacity: 1; }
+  .route-item.active .route-card {
     border-color: var(--talia-coral);
+    background: rgba(255,251,246,0.92);
     box-shadow:
-      0 0 0 4px rgba(231,106,60,0.15),
-      0 0 14px rgba(231,106,60,0.55);
-    transform: scale(1.05);
+      0 8px 24px rgba(231,106,60,0.18),
+      0 0 0 1px rgba(231,106,60,0.25) inset;
   }
-  .itinerary-item.reached.just-reached::after {
-    animation: itinRipple 1s ease-out forwards;
+  .route-card-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--talia-coral);
+    margin-bottom: 8px;
   }
-  @keyframes itinRipple {
-    0%   { opacity: 0.9; transform: scale(0.55); }
-    100% { opacity: 0;   transform: scale(2.2); }
+  .route-card h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--talia-ink);
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
   }
-
-  /* The item currently centered in viewport: emphasised */
-  .itinerary-item.active {
-    border-color: var(--talia-coral);
-    box-shadow:
-      0 12px 30px rgba(231,106,60,0.18),
-      0 0 0 1px rgba(231,106,60,0.35) inset;
-    background: linear-gradient(180deg, #fffbf6, #ffffff);
+  .route-card p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--talia-text);
+    margin: 0;
   }
-  .itinerary-item.active::before {
-    transform: scale(1.2);
-    box-shadow:
-      0 0 0 6px rgba(231,106,60,0.18),
-      0 0 22px rgba(231,106,60,0.75);
-  }
-  .itinerary-item.open { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-  .itinerary-item.open.active { box-shadow: 0 14px 36px rgba(231,106,60,0.25); }
 
   @media (prefers-reduced-motion: reduce) {
-    .itin-head { animation: none; }
-    .itinerary-item { opacity: 1; transform: none; filter: none; }
-    .itinerary-item.reached::after { animation: none; }
+    .route-comet { animation: none; }
+    .route-card { opacity: 1; transform: none; filter: none; }
+    .route-drawn { transition: none; }
   }
   @media (max-width: 900px) {
-    .itinerary-list { padding-left: 36px; }
-    .itinerary-list::before, .itinerary-list::after { left: 9px; }
-    .itin-head { left: 3px; }
-    .itinerary-item::before { left: -32px; }
-    .itinerary-item::after { left: -38px; }
+    .route-canvas { padding: 26px 18px 26px 64px; }
+    .route-svg { left: 18px; width: 32px; top: 52px; bottom: 52px; }
+    .route-node { left: -30px; width: 14px; height: 14px; }
+    .route-card::before { left: -16px; width: 14px; }
+    .route-canvas-meta { font-size: 9px; }
+    .route-canvas-meta.top-left, .route-canvas-meta.bottom-left { left: 28px; }
+    .route-canvas-meta.top-right, .route-canvas-meta.bottom-right { right: 18px; }
   }
   .itinerary-header {
     width: 100%;
@@ -3616,35 +3689,72 @@
 
         <div style="margin-top: 40px;">
           <div class="program-section-title">Itinerary Overview</div>
-          <div class="itinerary-list">
-            <div class="itinerary-item open">
-              <button class="itinerary-header">
-                <span>Days 1 – 2: Arrival & Contemporary Art</span>
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div class="itinerary-body">Welcome briefing, walking tour of MAXXI and contemporary galleries in Flaminio. Evening reception with local curators.</div>
-            </div>
-            <div class="itinerary-item">
-              <button class="itinerary-header">
-                <span>Days 3 – 4: Heritage & Art</span>
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div class="itinerary-body">Vatican Museums, the Sistine Chapel, and a private after-hours visit to the Borghese Gallery with a senior curator.</div>
-            </div>
-            <div class="itinerary-item">
-              <button class="itinerary-header">
-                <span>Days 5 – 6: Museums & Curating</span>
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div class="itinerary-body">Behind-the-scenes at Fondazione Alda Fendi. Curatorial workshops, networking lunch, closing reception.</div>
-            </div>
-            <div class="itinerary-item">
-              <button class="itinerary-header">
-                <span>Day 7: Departure</span>
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <div class="itinerary-body">Morning reflection session, group photo, and transfer to the airport.</div>
-            </div>
+
+          <!-- Drafting-canvas itinerary: a workspace the route is "drawn" onto as you scroll -->
+          <div class="route-canvas" data-progress="0">
+            <!-- Grid + corner brackets + metadata labels -->
+            <div class="route-canvas-grid" aria-hidden="true"></div>
+            <span class="route-canvas-bracket tl" aria-hidden="true"></span>
+            <span class="route-canvas-bracket tr" aria-hidden="true"></span>
+            <span class="route-canvas-bracket bl" aria-hidden="true"></span>
+            <span class="route-canvas-bracket br" aria-hidden="true"></span>
+            <div class="route-canvas-meta top-left">// route_plan · rome.dat</div>
+            <div class="route-canvas-meta top-right">41.9° N&nbsp;&nbsp;12.5° E</div>
+            <div class="route-canvas-meta bottom-left">6 milestones</div>
+            <div class="route-canvas-meta bottom-right"><span class="route-progress-readout">0%</span> drawn</div>
+
+            <!-- The drawn path (overlay) — JS sets viewBox + d after measuring node positions -->
+            <svg class="route-svg" aria-hidden="true" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="routeGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stop-color="#e76a3c" stop-opacity="0.55"/>
+                  <stop offset="55%"  stop-color="#e76a3c" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#ffc89a" stop-opacity="1"/>
+                </linearGradient>
+                <filter id="routeGlow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <path class="route-track" />
+              <path class="route-drawn" filter="url(#routeGlow)" />
+            </svg>
+            <!-- Comet head glides along the leading edge of the drawn path -->
+            <span class="route-comet" aria-hidden="true"></span>
+
+            <!-- Items: node + content card -->
+            <article class="route-item" data-index="0">
+              <span class="route-node" aria-hidden="true"></span>
+              <div class="route-card">
+                <span class="route-card-tag">Day 1 – 2</span>
+                <h4>Arrival &amp; Contemporary Art</h4>
+                <p>Welcome briefing, walking tour of MAXXI and contemporary galleries in Flaminio. Evening reception with local curators.</p>
+              </div>
+            </article>
+            <article class="route-item" data-index="1">
+              <span class="route-node" aria-hidden="true"></span>
+              <div class="route-card">
+                <span class="route-card-tag">Day 3 – 4</span>
+                <h4>Heritage &amp; Art</h4>
+                <p>Vatican Museums, the Sistine Chapel, and a private after-hours visit to the Borghese Gallery with a senior curator.</p>
+              </div>
+            </article>
+            <article class="route-item" data-index="2">
+              <span class="route-node" aria-hidden="true"></span>
+              <div class="route-card">
+                <span class="route-card-tag">Day 5 – 6</span>
+                <h4>Museums &amp; Curating</h4>
+                <p>Behind-the-scenes at Fondazione Alda Fendi. Curatorial workshops, networking lunch, closing reception.</p>
+              </div>
+            </article>
+            <article class="route-item" data-index="3">
+              <span class="route-node" aria-hidden="true"></span>
+              <div class="route-card">
+                <span class="route-card-tag">Day 7</span>
+                <h4>Departure</h4>
+                <p>Morning reflection session, group photo, and transfer to the airport.</p>
+              </div>
+            </article>
           </div>
           <button class="full-itinerary-btn">+ Full Itinerary</button>
         </div>
@@ -4143,101 +4253,155 @@
     });
   });
 
-  // ============ TĀLIA ITINERARY: SCROLL-DRAWN FUTURISTIC TIMELINE ============
-  // The neon line draws downward as the user scrolls past the section.
-  // Each milestone "materializes" the moment the leading edge crosses its dot,
-  // emitting a ring-ripple. A glowing comet head rides the leading edge.
-  document.querySelectorAll('.itinerary-list').forEach(list => {
-    const items = Array.from(list.querySelectorAll('.itinerary-item'));
+  // ============ TĀLIA ITINERARY: DRAFTING-CANVAS SCROLL DRAWING ============
+  // Build a curved SVG path that threads through each milestone node, then "draw" it
+  // (stroke-dashoffset) and reveal cards as the scroll-bound progress advances.
+  // A comet head element rides the leading edge of the drawn path.
+  document.querySelectorAll('.route-canvas').forEach(canvas => {
+    const items = Array.from(canvas.querySelectorAll('.route-item'));
     if (!items.length) return;
 
-    // Inject the comet head element once
-    if (!list.querySelector('.itin-head')) {
-      const head = document.createElement('span');
-      head.className = 'itin-head';
-      head.setAttribute('aria-hidden', 'true');
-      list.appendChild(head);
-    }
+    const svg     = canvas.querySelector('.route-svg');
+    const track   = canvas.querySelector('.route-track');
+    const drawn   = canvas.querySelector('.route-drawn');
+    const comet   = canvas.querySelector('.route-comet');
+    const readout = canvas.querySelector('.route-progress-readout');
+    if (!svg || !track || !drawn) return;
 
-    // Track manual user toggles so we don't override their open/close choice
-    const userToggled = new WeakSet();
-    items.forEach(it => {
-      const header = it.querySelector('.itinerary-header');
-      if (header) header.addEventListener('click', () => userToggled.add(it));
-    });
+    // Build the path's d attribute based on node centers within the SVG box.
+    // Path snakes left/right gently (alternating curve direction) for a "drawn" feel.
+    let pathLength = 0;
+    let nodeOffsetsOnPath = [];   // arc-length along the path where each node sits
+    let nodePositions    = [];    // {x,y} of each node in canvas coords (for comet absolute positioning)
+    const buildPath = () => {
+      const svgRect    = svg.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const w = svgRect.width;
+      const h = svgRect.height;
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.setAttribute('width',  w);
+      svg.setAttribute('height', h);
 
-    // Per-item dot Y-offset within the list (computed lazily)
-    let dotOffsets = [];
-    const recomputeOffsets = () => {
-      const listTop = list.getBoundingClientRect().top + window.scrollY;
-      dotOffsets = items.map(it => {
-        const r = it.getBoundingClientRect();
-        // dot sits roughly 23px below the item's top (top:14 + half of 18)
-        return (r.top + window.scrollY) - listTop + 23;
+      // Y-position of each node = its center relative to the SVG's top edge
+      const yByNode = items.map(it => {
+        const node = it.querySelector('.route-node');
+        const r = node.getBoundingClientRect();
+        return (r.top + r.height / 2) - svgRect.top;
       });
-      // Total track height = from first dot to last dot
-      const trackH = dotOffsets.length ? dotOffsets[dotOffsets.length - 1] - 18 + 14 : 0;
-      list.style.setProperty('--itin-track-h', Math.max(0, trackH) + 'px');
+
+      // X-positions alternate gently around the centerline for a hand-drawn curve
+      const cx = w / 2;
+      const amp = Math.min(w * 0.35, 10);   // small lateral wiggle
+      const xByNode = yByNode.map((_, i) => cx + (i % 2 === 0 ? -amp : amp));
+
+      // Build a smooth path through the points using cubic Bezier segments
+      let d = `M ${xByNode[0].toFixed(2)} ${yByNode[0].toFixed(2)}`;
+      for (let i = 1; i < yByNode.length; i++) {
+        const x0 = xByNode[i - 1], y0 = yByNode[i - 1];
+        const x1 = xByNode[i],     y1 = yByNode[i];
+        const dy = (y1 - y0);
+        const cy1 = y0 + dy * 0.55;
+        const cy2 = y1 - dy * 0.55;
+        // Control x's match each endpoint to keep tangents vertical at the nodes
+        d += ` C ${x0.toFixed(2)} ${cy1.toFixed(2)}, ${x1.toFixed(2)} ${cy2.toFixed(2)}, ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+      }
+      track.setAttribute('d', d);
+      drawn.setAttribute('d', d);
+
+      pathLength = drawn.getTotalLength();
+      canvas.style.setProperty('--route-path-length', pathLength);
+
+      // Compute arc-length along the path at each node — used to flip "reached" states
+      // Walk the path in small steps, find the t where the point is closest to each node.
+      const samples = 200;
+      const pts = [];
+      for (let s = 0; s <= samples; s++) {
+        const len = (s / samples) * pathLength;
+        const p = drawn.getPointAtLength(len);
+        pts.push({ len, x: p.x, y: p.y });
+      }
+      nodeOffsetsOnPath = yByNode.map((ny, i) => {
+        const nx = xByNode[i];
+        let best = pts[0], bestDist = Infinity;
+        for (const p of pts) {
+          const dx = p.x - nx, dy = p.y - ny;
+          const dist = dx * dx + dy * dy;
+          if (dist < bestDist) { bestDist = dist; best = p; }
+        }
+        return best.len;
+      });
+
+      // Save node positions in canvas-local coords (for the comet head)
+      nodePositions = items.map(it => {
+        const node = it.querySelector('.route-node');
+        const r = node.getBoundingClientRect();
+        return {
+          x: (r.left + r.width / 2)  - canvasRect.left,
+          y: (r.top  + r.height / 2) - canvasRect.top
+        };
+      });
     };
 
     let ticking = false;
     const update = () => {
       ticking = false;
-      if (!dotOffsets.length) recomputeOffsets();
+      if (!pathLength) buildPath();
+      if (!pathLength) return;
 
-      const listRect = list.getBoundingClientRect();
-      const focusY = window.innerHeight * 0.45;            // the "drawing line" in screen space
-      const drawnPx = Math.max(0, Math.min(
-        focusY - listRect.top - 18,                         // pixels of line drawn (relative to list top, minus the 18px offset)
-        (dotOffsets[dotOffsets.length - 1] || 0)            // never overshoot the last dot
-      ));
+      // Progress is bound to where the canvas sits relative to a "focus line" at
+      // 50% of the viewport. As you scroll the canvas through that line, 0 → 1.
+      const r = canvas.getBoundingClientRect();
+      const focus = window.innerHeight * 0.5;
+      const span  = r.height * 0.8;   // distance over which the line draws fully
+      const startY = r.top + r.height * 0.1;   // start drawing slightly into the canvas
+      const raw = (focus - startY) / span;
+      const progress = Math.max(0, Math.min(1, raw));
 
-      list.style.setProperty('--itin-progress', drawnPx + 'px');
-      list.dataset.progressActive = drawnPx > 0 ? 'true' : 'false';
+      canvas.style.setProperty('--route-progress', progress);
+      canvas.dataset.progressActive = progress > 0.001 ? 'true' : 'false';
+      if (readout) readout.textContent = Math.round(progress * 100) + '%';
 
-      // Find the currently active item (the one whose dot the head is on or just past)
+      // Position the comet head at the leading edge of the drawn path
+      const len = progress * pathLength;
+      const p   = drawn.getPointAtLength(len);
+      // p is in SVG coordinates; SVG itself is offset within the canvas (svg.offsetLeft/Top
+      // can't be trusted with non-relative parents — compute via getBoundingClientRect diff)
+      const svgRect    = svg.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const offsetX = svgRect.left - canvasRect.left;
+      const offsetY = svgRect.top  - canvasRect.top;
+      canvas.style.setProperty('--route-head-x', (offsetX + p.x) + 'px');
+      canvas.style.setProperty('--route-head-y', (offsetY + p.y) + 'px');
+
+      // Determine which items are reached: their path-offset is <= current drawn length
       let activeIdx = -1;
-      for (let i = 0; i < dotOffsets.length; i++) {
-        if (drawnPx >= dotOffsets[i] - 4) activeIdx = i;
-      }
-
       items.forEach((it, i) => {
+        const reachedNow = len >= nodeOffsetsOnPath[i] - 2;
         const wasReached = it.classList.contains('reached');
-        const isReached = i <= activeIdx;
-        if (isReached && !wasReached) {
-          // Fire the ring-ripple once on first reach
+        if (reachedNow && !wasReached) {
           it.classList.add('reached', 'just-reached');
           setTimeout(() => it.classList.remove('just-reached'), 1100);
-        } else if (!isReached && wasReached) {
-          // User scrolled back up — un-reach so it can re-fire on re-entry
+        } else if (!reachedNow && wasReached) {
           it.classList.remove('reached', 'just-reached');
         }
-        it.classList.toggle('active', i === activeIdx);
-        if (!userToggled.has(it)) {
-          it.classList.toggle('open', i === activeIdx);
-        }
+        if (reachedNow) activeIdx = i;
       });
+      items.forEach((it, i) => it.classList.toggle('active', i === activeIdx));
     };
 
     const onScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        requestAnimationFrame(update);
-      }
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
     };
-
-    const onResize = () => {
-      dotOffsets = [];     // force recompute on next scroll tick
+    const rebuild = () => {
+      pathLength = 0;
       onScroll();
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize, { passive: true });
-    // Initial paint after layout settles (fonts loaded, accordion sized)
-    setTimeout(() => { recomputeOffsets(); update(); }, 150);
-    // Also recompute after fonts load (sizes can shift)
+    window.addEventListener('resize', rebuild,  { passive: true });
+    setTimeout(() => { buildPath(); update(); }, 150);
     if (document.fonts && document.fonts.ready) {
-      document.fonts.ready.then(() => { recomputeOffsets(); update(); });
+      document.fonts.ready.then(() => { buildPath(); update(); });
     }
   });
 </script>
