@@ -82,6 +82,9 @@
     padding: 14px 32px;
     border-bottom: 1px solid var(--line);
   }
+  .logo-cluster {
+    display: inline-flex; align-items: center; gap: 16px;
+  }
   .logo {
     display: inline-flex; align-items: center;
     text-decoration: none; cursor: pointer;
@@ -94,6 +97,22 @@
     fill: white;
   }
   .nav.scrolled .logo-svg { height: 26px; }
+
+  /* Tālia logo appears beside TalentS only on Tālia pages */
+  .logo-talia,
+  .logo-divider { display: none; }
+  .logo-divider {
+    width: 1px; height: 22px;
+    background: rgba(255,255,255,0.25);
+  }
+  body.talia-active .logo-talia { display: inline-flex; opacity: 0; animation: taliaLogoIn .5s ease forwards; }
+  body.talia-active .logo-divider { display: inline-block; opacity: 0; animation: taliaLogoIn .5s .05s ease forwards; }
+  @keyframes taliaLogoIn {
+    from { opacity: 0; transform: translateX(-6px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .logo-talia .logo-svg { height: 26px; }
+  .nav.scrolled .logo-talia .logo-svg { height: 24px; }
   .footer-logo-svg {
     height: 36px; width: auto;
     fill: white;
@@ -101,6 +120,12 @@
   }
   @media (max-width: 900px) {
     .logo-svg { height: 24px; }
+    .logo-cluster { gap: 10px; }
+    .logo-divider { height: 18px; }
+    .logo-talia .logo-svg { height: 22px; }
+  }
+  @media (max-width: 380px) {
+    body.talia-active .logo-talia .logo-svg { height: 20px; }
   }
   .nav-links { display: flex; gap: 36px; list-style: none; }
   .nav-links a {
@@ -1523,16 +1548,77 @@
     line-height: 1.6;
   }
 
-  /* Itinerary accordion */
-  .itinerary-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  /* Itinerary accordion + scroll-driven timeline */
+  .itinerary-list {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: 16px;
+    position: relative;
+    padding-left: 28px;
+  }
+  .itinerary-list::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: var(--talia-line);
+    border-radius: 2px;
+  }
+  .itinerary-list::after {
+    content: '';
+    position: absolute;
+    left: 7px; top: 8px;
+    width: 2px;
+    height: var(--itinerary-progress, 0%);
+    background: linear-gradient(180deg, var(--talia-coral), var(--talia-olive));
+    border-radius: 2px;
+    transition: height .25s ease-out;
+  }
   .itinerary-item {
     background: white;
     border: 1px solid var(--talia-line);
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
-    transition: all .3s;
+    transition: transform .5s cubic-bezier(0.2, 0.8, 0.2, 1),
+                opacity .5s ease,
+                border-color .35s ease,
+                box-shadow .35s ease,
+                background .35s ease;
+    position: relative;
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  .itinerary-item::before {
+    content: '';
+    position: absolute;
+    left: -28px; top: 18px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--talia-line);
+    transition: background .35s ease, border-color .35s ease, transform .35s ease, box-shadow .35s ease;
+    z-index: 1;
+  }
+  .itinerary-item.in-view {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .itinerary-item.active {
+    border-color: var(--talia-coral);
+    box-shadow: 0 12px 30px rgba(231,106,60,0.18);
+    background: #fffbf6;
+  }
+  .itinerary-item.active::before {
+    background: var(--talia-coral);
+    border-color: var(--talia-coral);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 6px rgba(231,106,60,0.15);
+  }
+  .itinerary-item.passed::before {
+    background: var(--talia-olive);
+    border-color: var(--talia-olive);
   }
   .itinerary-item.open { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+  .itinerary-item.open.active { box-shadow: 0 12px 30px rgba(231,106,60,0.22); }
   .itinerary-header {
     width: 100%;
     padding: 14px 18px;
@@ -2304,13 +2390,23 @@
 
 <!-- NAV -->
 <nav class="nav" id="nav">
-  <a class="logo" data-page="home" aria-label="TalentS">
-    <svg class="logo-svg" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
-      <text x="0" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" fill="currentColor" letter-spacing="-1">Talen</text>
-      <text x="173" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" font-style="italic" fill="currentColor">t</text>
-      <text x="200" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" fill="currentColor">S</text>
-    </svg>
-  </a>
+  <div class="logo-cluster">
+    <a class="logo" data-page="home" aria-label="TalentS">
+      <svg class="logo-svg" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" fill="currentColor" letter-spacing="-1">Talen</text>
+        <text x="173" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" font-style="italic" fill="currentColor">t</text>
+        <text x="200" y="60" font-family="Fraunces, Georgia, serif" font-size="72" font-weight="500" fill="currentColor">S</text>
+      </svg>
+    </a>
+    <span class="logo-divider" aria-hidden="true"></span>
+    <a class="logo logo-talia" data-page="talia" aria-label="Tālia Programs">
+      <svg class="logo-svg" viewBox="0 0 220 80" xmlns="http://www.w3.org/2000/svg">
+        <text x="0" y="60" font-family="Fraunces, Georgia, serif" font-size="64" font-weight="400" fill="currentColor" letter-spacing="0.5">Tāl</text>
+        <text x="103" y="60" font-family="Fraunces, Georgia, serif" font-size="64" font-weight="400" font-style="italic" fill="currentColor">i</text>
+        <text x="125" y="60" font-family="Fraunces, Georgia, serif" font-size="64" font-weight="400" fill="currentColor">a</text>
+      </svg>
+    </a>
+  </div>
   <ul class="nav-links">
     <li><a data-page="work">Our Work</a></li>
     <li><a data-page="services">Services</a></li>
@@ -3952,6 +4048,75 @@
     btn.addEventListener('click', () => {
       btn.closest('.faq-item').classList.toggle('open');
     });
+  });
+
+  // ============ TĀLIA ITINERARY: SCROLL-DRIVEN INTERACTION ============
+  // 1) Stagger-reveal items as they enter the viewport
+  // 2) Track which item is closest to viewport center → mark it .active
+  //    (auto-opens that item, marks earlier ones .passed)
+  // 3) Grow a vertical progress line alongside the timeline
+  document.querySelectorAll('.itinerary-list').forEach(list => {
+    const items = Array.from(list.querySelectorAll('.itinerary-item'));
+    if (!items.length) return;
+
+    // Stagger reveal
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const idx = items.indexOf(entry.target);
+          entry.target.style.transitionDelay = (idx * 80) + 'ms';
+          entry.target.classList.add('in-view');
+          revealObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+    items.forEach(it => revealObs.observe(it));
+
+    // Scroll-spy: pick the item closest to the viewport's vertical center
+    let userToggled = new WeakSet();
+    items.forEach(it => {
+      const header = it.querySelector('.itinerary-header');
+      if (header) header.addEventListener('click', () => userToggled.add(it));
+    });
+
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const focusY = window.innerHeight * 0.4;
+      let activeIdx = -1;
+      let bestDist = Infinity;
+      items.forEach((it, i) => {
+        const r = it.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > window.innerHeight) return;
+        const center = r.top + r.height / 2;
+        const dist = Math.abs(center - focusY);
+        if (dist < bestDist) { bestDist = dist; activeIdx = i; }
+      });
+      items.forEach((it, i) => {
+        const isActive = i === activeIdx;
+        it.classList.toggle('active', isActive);
+        it.classList.toggle('passed', i < activeIdx);
+        // Auto-open the active item (unless the user manually toggled it)
+        if (!userToggled.has(it)) {
+          it.classList.toggle('open', isActive);
+        }
+      });
+      // Grow the progress line based on the active index
+      const progress = activeIdx < 0 ? 0 : ((activeIdx + 1) / items.length) * 100;
+      list.style.setProperty('--itinerary-progress', progress + '%');
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    // Initial run after layout settles
+    setTimeout(update, 100);
   });
 </script>
 </body>
